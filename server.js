@@ -11,6 +11,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 const os = require("os");
 const https = require("https");
+const path = require("path");
 const nodemailer = require("nodemailer");
 const localtunnel = require("localtunnel");
 require("./db");
@@ -27,6 +28,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static("frontend"));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
+
+app.get('/form.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'form.html'));
+});
 
 // Define Schemas
 const userSchema = new mongoose.Schema({
