@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: timegen-web
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    branch: main
+    envVars:
+      - name: MONGO_URI
+      - name: EMAIL_USER
+      - name: EMAIL_PASS
+      - name: PUBLIC_URL
+      - name: PORT

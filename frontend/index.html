@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeGen | Official University Timetable System</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #38bdf8;
+        --secondary: #818cf8;
+        --dark: #0f172a;
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1e1b4b);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        color: white;
+        overflow-x: hidden;
+        min-height: 100vh;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+        50% { background-position: 100% 50%; filter: hue-rotate(30deg); }
+        100% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+    }
+
+    /* Bubbles Animation */
+    .bubbles {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .bubble {
+        position: absolute;
+        bottom: -100px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        animation: rise var(--duration) infinite ease-in;
+        animation-delay: var(--delay);
+        left: var(--left);
+        width: var(--size);
+        height: var(--size);
+    }
+    @keyframes rise {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        50% { opacity: 0.3; }
+        100% { transform: translateY(-120vh) rotate(720deg); opacity: 0; }
+    }
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 50px;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(15px);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        z-index: 1000;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 26px;
+        font-weight: 700;
+    }
+    .logo span { color: var(--primary); }
+
+    .nav-links a {
+        color: #cbd5e1;
+        text-decoration: none;
+        margin-left: 30px;
+        font-size: 15px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    .nav-links a:hover { color: var(--primary); }
+
+    .btn-nav {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #0f172a !important;
+        padding: 10px 25px;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+    }
+
+    .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 120px 20px 50px;
+        position: relative;
+    }
+
+    .badge {
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--primary);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 25px;
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        animation: fadeInUp 1s ease-out;
+    }
+
+    .hero h1 {
+        font-size: 72px;
+        line-height: 1.1;
+        margin-bottom: 25px;
+        max-width: 900px;
+        animation: fadeInUp 1s ease-out 0.2s both;
+    }
+    .hero h1 span {
+        background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+        font-size: 20px;
+        color: #94a3b8;
+        max-width: 650px;
+        margin-bottom: 45px;
+        animation: fadeInUp 1s ease-out 0.4s both;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 20px;
+        animation: fadeInUp 1s ease-out 0.6s both;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #0f172a;
+        padding: 18px 45px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 16px;
+        letter-spacing: 1px;
+        transition: 0.4s;
+        border: none;
+        box-shadow: 0 10px 30px rgba(56, 189, 248, 0.4);
+        text-transform: uppercase;
+    }
+    .btn-primary:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(56, 189, 248, 0.6);
+        filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.03);
+        color: #fff;
+        padding: 18px 45px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 16px;
+        letter-spacing: 1px;
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+        transition: 0.4s;
+        text-transform: uppercase;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.3);
+        transform: translateY(-5px);
+    }
+
+    .features-section {
+        padding: 100px 50px;
+        position: relative;
+    }
+
+    .section-title {
+        text-align: center;
+        font-size: 42px;
+        margin-bottom: 60px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 35px;
+        max-width: 1250px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        padding: 45px 35px;
+        border-radius: 24px;
+        backdrop-filter: blur(10px);
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-10px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-icon {
+        font-size: 45px;
+        margin-bottom: 25px;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .card h3 {
+        font-size: 24px;
+        margin-bottom: 15px;
+        color: #f8fafc;
+    }
+    .card p {
+        color: #94a3b8;
+        line-height: 1.7;
+    }
+
+    footer {
+        text-align: center;
+        padding: 40px;
+        background: rgba(15, 23, 42, 0.9);
+        border-top: 1px solid var(--glass-border);
+        color: #64748b;
+        font-size: 15px;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .hero h1 { font-size: 44px; }
+        .nav-links { display: none; }
+        .cta-buttons { flex-direction: column; width: 100%; }
+        .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+    }
+</style>
+</head>
+<body>
+  <div class="bubbles">
+    <div class="bubble" style="--left: 5%; --size: 80px; --duration: 12s; --delay: 0s;"></div>
+    <div class="bubble" style="--left: 15%; --size: 20px; --duration: 8s; --delay: 2s;"></div>
+    <div class="bubble" style="--left: 25%; --size: 50px; --duration: 15s; --delay: 4s;"></div>
+    <div class="bubble" style="--left: 35%; --size: 30px; --duration: 10s; --delay: 1s;"></div>
+    <div class="bubble" style="--left: 45%; --size: 100px; --duration: 20s; --delay: 3s;"></div>
+    <div class="bubble" style="--left: 55%; --size: 40px; --duration: 12s; --delay: 5s;"></div>
+    <div class="bubble" style="--left: 65%; --size: 60px; --duration: 18s; --delay: 2s;"></div>
+    <div class="bubble" style="--left: 75%; --size: 25px; --duration: 9s; --delay: 3s;"></div>
+    <div class="bubble" style="--left: 85%; --size: 70px; --duration: 16s; --delay: 0s;"></div>
+    <div class="bubble" style="--left: 95%; --size: 35px; --duration: 11s; --delay: 4s;"></div>
+  </div>
+<nav>
+    <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="url(#navgrad)" />
+            <rect x="25" y="30" width="50" height="40" fill="none" stroke="white" stroke-width="2"/>
+            <line x1="25" y1="45" x2="75" y2="45" stroke="white" stroke-width="2"/>
+            <line x1="25" y1="60" x2="75" y2="60" stroke="white" stroke-width="2"/>
+            <line x1="40" y1="30" x2="40" y2="70" stroke="white" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="70" stroke="white" stroke-width="2"/>
+            <line x1="50" y1="50" x2="65" y2="40" stroke="white" stroke-width="3"/>
+            <defs>
+                <linearGradient id="navgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#818cf8"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <div>Time<span>Gen</span></div>
+    </div>
+    <div class="nav-links">
+        <a href="dashboard.html">Generate Timetable</a>
+        <a href="view.html">View Timetables</a>
+        <a href="login.html">Login</a>
+    </div>
+    <a href="signup.html" class="btn-nav">Get Started</a>
+</nav>
+
+<section class="hero">
+    <div class="badge">🚀 Experience the Future of Academic Planning</div>
+    <h1>Master Your College <br><span>Timetable Effortlessly</span></h1>
+    <p>The industry-leading platform for conflict-free scheduling, automated room allocation, and real-time workload analytics.</p>
+    
+    <div class="cta-buttons">
+        <a href="login.html" class="btn-primary" style="display: flex; align-items: center; gap: 12px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+            Secure Portal Access
+        </a>
+        <a href="signup.html" class="btn-secondary" style="display: flex; align-items: center; gap: 12px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            Onboard Institution
+        </a>
+    </div>
+</section>
+
+<section id="features" class="features-section">
+    <h2 class="section-title">Institutional-Grade Power</h2>
+    <div class="grid">
+        <div class="card">
+            <div class="card-icon">🏫</div>
+            <h3>Smart Allocation</h3>
+            <p>Our proprietary algorithm intelligently manages lecture halls and labs, ensuring zero physical clashes across all departments.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">📊</div>
+            <h3>Faculty Analytics</h3>
+            <p>Optimize workload distribution with real-time tracking of teaching hours, preventing faculty burnout and ensuring balance.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔒</div>
+            <h3>Secure Isolation</h3>
+            <p>Enterprise-grade security keeps department data (BCA, MCA, BBA) isolated, providing dedicated control for every administrator.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Rapid Generation</h3>
+            <p>Transform weeks of manual planning into seconds of automated processing. Generate perfect schedules with a single click.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">📄</div>
+            <h3>Pro PDF Export</h3>
+            <p>Instantly generate high-resolution, print-ready PDFs of every timetable, formatted perfectly for university notice boards.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">📱</div>
+            <h3>Mobile-First Design</h3>
+            <p>Teachers can scan a secure QR code to submit their assignments directly from their smartphones, anytime, anywhere.</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    &copy; 2026 TimeGen | The Gold Standard in Academic Scheduling
+</footer>
+
+</body>
+</html>

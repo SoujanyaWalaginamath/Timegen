@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeGen | Log In</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #38bdf8;
+        --secondary: #818cf8;
+        --dark: #0f172a;
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+    body {
+        background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1e1b4b);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+        50% { background-position: 100% 50%; filter: hue-rotate(30deg); }
+        100% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+    }
+
+    /* Bubbles Animation */
+    .bubbles {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .bubble {
+        position: absolute;
+        bottom: -100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: rise var(--duration) infinite ease-in;
+        left: var(--left);
+        width: var(--size);
+        height: var(--size);
+    }
+    @keyframes rise {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        50% { opacity: 0.5; }
+        100% { transform: translateY(-120vh) rotate(720deg); opacity: 0; }
+    }
+
+    .container {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        padding: 50px 40px;
+        border-radius: 30px;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 420px;
+        animation: fadeInContainer 1s ease-out, float 6s ease-in-out infinite;
+    }
+
+    @keyframes fadeInContainer {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideInFromRight {
+        from { opacity: 0; transform: translateX(150px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .stagger-1 { animation: fadeIn 0.8s ease-out 0.2s both; }
+    .stagger-2 { animation: slideInFromLeft 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s both; }
+    .stagger-3 { animation: fadeIn 0.8s ease-out 0.6s both; }
+
+    @keyframes slideInFromLeft {
+        from { opacity: 0; transform: translateX(-150px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+        text-align: center;
+        font-size: 32px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+    p.subtitle {
+        text-align: center;
+        color: #94a3b8;
+        margin-bottom: 35px;
+        font-size: 14px;
+    }
+
+    .input-group { margin-bottom: 25px; }
+    .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #cbd5e1;
+    }
+    .input-group input {
+        width: 100%;
+        padding: 14px 20px;
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        color: #fff;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+    .input-group input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+    }
+
+    .password-container {
+        position: relative;
+    }
+    .toggle-password {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 18px;
+        user-select: none;
+    }
+    .toggle-password:hover {
+        color: var(--primary);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
+    }
+    .btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 15px 30px rgba(56, 189, 248, 0.5);
+    }
+
+    .link {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 14px;
+        color: #94a3b8;
+    }
+    .link a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .link a:hover { text-decoration: underline; }
+    
+    .forgot-pass {
+        text-align: right;
+        margin-top: -15px;
+        margin-bottom: 20px;
+        font-size: 13px;
+    }
+    .forgot-pass a {
+        color: var(--primary);
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .forgot-pass a:hover { text-decoration: underline; }
+
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+</style>
+</head>
+<body>
+  <div class="bubbles">
+    <div class="bubble" style="--left: 10%; --size: 80px; --duration: 8s;"></div>
+    <div class="bubble" style="--left: 20%; --size: 30px; --duration: 12s; --delay: 2s;"></div>
+    <div class="bubble" style="--left: 35%; --size: 50px; --duration: 10s; --delay: 4s;"></div>
+    <div class="bubble" style="--left: 50%; --size: 20px; --duration: 7s; --delay: 1s;"></div>
+    <div class="bubble" style="--left: 65%; --size: 100px; --duration: 15s; --delay: 3s;"></div>
+    <div class="bubble" style="--left: 80%; --size: 40px; --duration: 9s; --delay: 5s;"></div>
+    <div class="bubble" style="--left: 90%; --size: 60px; --duration: 11s; --delay: 2s;"></div>
+    <div class="bubble" style="--left: 15%; --size: 25px; --duration: 6s; --delay: 3s;"></div>
+    <div class="bubble" style="--left: 45%; --size: 70px; --duration: 13s; --delay: 0s;"></div>
+    <div class="bubble" style="--left: 75%; --size: 35px; --duration: 8s; --delay: 4s;"></div>
+  </div>
+  <div class="container">
+    <div class="logo-container stagger-1">
+        <svg width="60" height="60" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="url(#navgrad)" />
+            <rect x="25" y="30" width="50" height="40" fill="none" stroke="white" stroke-width="2"/>
+            <line x1="25" y1="45" x2="75" y2="45" stroke="white" stroke-width="2"/>
+            <line x1="25" y1="60" x2="75" y2="60" stroke="white" stroke-width="2"/>
+            <line x1="40" y1="30" x2="40" y2="70" stroke="white" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="70" stroke="white" stroke-width="2"/>
+            <line x1="50" y1="50" x2="65" y2="40" stroke="white" stroke-width="3"/>
+            <defs>
+                <linearGradient id="navgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#818cf8"/>
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+    <h2 class="stagger-2" style="letter-spacing: 5px; text-transform: uppercase; font-size: 42px; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LOGIN</h2>
+    <form id="loginForm" class="stagger-3">
+      <div class="input-group">
+        <label for="email">Email or Username</label>
+        <input type="text" id="email" name="email" placeholder="admin@university.edu or Admin123" required>
+      </div>
+      <div class="input-group">
+        <label for="password">Password</label>
+        <div class="password-container">
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+          <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+      </div>
+      <div class="forgot-pass stagger-3">
+        <a onclick="handleForgotPassword()">Forgot Password?</a>
+      </div>
+      <button type="submit" class="btn">Log In to TimeGen</button>
+    </form>
+    <div class="link stagger-3">New administrator? <a href="signup.html">Create an account</a></div>
+  </div>
+
+  <script>
+    function togglePassword() {
+        const passInput = document.getElementById('password');
+        const toggleBtn = document.querySelector('.toggle-password');
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            toggleBtn.textContent = '🙈';
+        } else {
+            passInput.type = 'password';
+            toggleBtn.textContent = '👁️';
+        }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Store in sessionStorage for security as requested earlier
+                sessionStorage.setItem('token', data.token);
+                sessionStorage.setItem('userName', data.userName);
+                sessionStorage.setItem('department', data.department);
+                sessionStorage.setItem('institution', data.institution);
+                sessionStorage.setItem('userEmail', email);
+                window.location.href = 'dashboard.html';
+            } else {
+                alert(data.message || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Server error, please try again later');
+        }
+    });
+
+    async function handleForgotPassword() {
+        const email = prompt("Enter your registered email address to receive a new password:");
+        if (!email) return;
+
+        try {
+            const response = await fetch('/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert("A new temporary password has been sent to your email address.");
+            } else {
+                alert(data.message || "Failed to reset password.");
+            }
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            alert("Server error, please try again later");
+        }
+    }
+  </script>
+</body>
+</html>

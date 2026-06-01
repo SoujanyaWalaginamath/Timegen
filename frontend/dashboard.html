@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimeGen | Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.35);
+      --secondary: #818cf8;
+      --secondary-glow: rgba(129, 140, 248, 0.35);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.4);
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --dark: #0f172a;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-hover: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1a1040);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* ── Floating particles ── */
+    .bubbles {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .bubble {
+      position: absolute;
+      bottom: -100px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+      animation: rise var(--duration) infinite ease-in;
+      animation-delay: var(--delay);
+      left: var(--left);
+      width: var(--size);
+      height: var(--size);
+    }
+
+    @keyframes rise {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 0.25;
+      }
+
+      100% {
+        transform: translateY(-120vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 40px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .logo span {
+      color: var(--primary);
+    }
+
+    .nav-right {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .btn-logout {
+      padding: 8px 22px;
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn-logout:hover {
+      background: var(--rose);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(244, 63, 94, 0.35);
+    }
+
+    /* ── Main ── */
+    .main-container {
+      flex: 1;
+      padding: 40px;
+      max-width: 1300px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Welcome header ── */
+    .welcome-header {
+      margin-bottom: 40px;
+      animation: slideDown 0.7s ease-out both;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-22px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .institution-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .welcome-header h1 {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .welcome-header h1 span {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .welcome-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .welcome-header p b {
+      color: var(--secondary);
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
+      animation: slideUp 0.7s 0.1s ease-out both;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-card:hover {
+      background: var(--glass-hover);
+      transform: translateY(-4px);
+    }
+
+    .stat-icon {
+      font-size: 26px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Action cards ── */
+    .section-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+      animation: slideUp 0.7s 0.2s ease-out both;
+    }
+
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 36px 30px;
+      text-align: left;
+      transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 70% 10%, rgba(56, 189, 248, 0.12) 0%, transparent 65%);
+      opacity: 0;
+      transition: 0.4s;
+      pointer-events: none;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      background: var(--glass-hover);
+    }
+
+    .card:hover::after {
+      opacity: 1;
+    }
+
+    .card.card-generate {
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .card.card-generate:hover {
+      border-color: var(--primary);
+      box-shadow: 0 20px 50px rgba(56, 189, 248, 0.18);
+    }
+
+    .card.card-view {
+      border-color: rgba(129, 140, 248, 0.25);
+    }
+
+    .card.card-view::after {
+      background: radial-gradient(circle at 70% 10%, rgba(129, 140, 248, 0.12) 0%, transparent 65%);
+    }
+
+    .card.card-view:hover {
+      border-color: var(--secondary);
+      box-shadow: 0 20px 50px rgba(129, 140, 248, 0.18);
+    }
+
+    .card.card-analytics {
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .card.card-analytics::after {
+      background: radial-gradient(circle at 70% 10%, rgba(16, 185, 129, 0.12) 0%, transparent 65%);
+    }
+
+    .card.card-analytics:hover {
+      border-color: var(--emerald);
+      box-shadow: 0 20px 50px rgba(16, 185, 129, 0.18);
+    }
+
+    .card.card-reset {
+      border-color: rgba(244, 63, 94, 0.2);
+    }
+
+    .card.card-reset::after {
+      background: radial-gradient(circle at 70% 10%, rgba(244, 63, 94, 0.1) 0%, transparent 65%);
+    }
+
+    .card.card-reset:hover {
+      border-color: var(--rose);
+      box-shadow: 0 20px 50px rgba(244, 63, 94, 0.15);
+    }
+
+    .card-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 22px;
+      transition: 0.3s;
+    }
+
+    .card-generate .card-icon-wrap {
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    .card-view .card-icon-wrap {
+      background: rgba(129, 140, 248, 0.15);
+    }
+
+    .card-analytics .card-icon-wrap {
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .card-reset .card-icon-wrap {
+      background: rgba(244, 63, 94, 0.12);
+    }
+
+    .card:hover .card-icon-wrap {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    .card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .card-arrow {
+      position: absolute;
+      right: 28px;
+      bottom: 28px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: 0.35s;
+    }
+
+    .card:hover .card-arrow {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: translate(4px, -4px);
+    }
+
+    .card-view:hover .card-arrow {
+      background: var(--secondary);
+      border-color: var(--secondary);
+    }
+
+    .card-analytics:hover .card-arrow {
+      background: var(--emerald);
+      border-color: var(--emerald);
+    }
+
+    .card-reset:hover .card-arrow {
+      background: var(--rose);
+      border-color: var(--rose);
+    }
+
+    /* ── Generate panel ── */
+    #content-area {
+      margin-top: 10px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 24px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 50px;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 28px;
+      transition: 0.3s;
+      width: fit-content;
+    }
+
+    .back-btn:hover {
+      background: var(--primary);
+      color: var(--dark);
+      transform: translateX(-4px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    .back-btn svg {
+      transition: 0.3s;
+    }
+
+    .back-btn:hover svg {
+      transform: translateX(-3px);
+    }
+
+    .generate-panel {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 52px 50px;
+      text-align: center;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      margin: 28px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 16px;
+      width: fit-content;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .emerald-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 38px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 10px 28px var(--emerald-glow);
+      transition: 0.3s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .emerald-btn:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 16px 38px var(--emerald-glow);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 14px 28px;
+      background: var(--emerald);
+      color: white;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transform: translateY(120px);
+      transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bubbles">
+    <div class="bubble" style="--left:5%;--size:80px;--duration:12s;--delay:0s;"></div>
+    <div class="bubble" style="--left:15%;--size:20px;--duration:8s;--delay:2s;"></div>
+    <div class="bubble" style="--left:25%;--size:50px;--duration:15s;--delay:4s;"></div>
+    <div class="bubble" style="--left:35%;--size:30px;--duration:10s;--delay:1s;"></div>
+    <div class="bubble" style="--left:45%;--size:100px;--duration:20s;--delay:3s;"></div>
+    <div class="bubble" style="--left:55%;--size:40px;--duration:12s;--delay:5s;"></div>
+    <div class="bubble" style="--left:65%;--size:60px;--duration:18s;--delay:2s;"></div>
+    <div class="bubble" style="--left:75%;--size:25px;--duration:9s;--delay:3s;"></div>
+    <div class="bubble" style="--left:85%;--size:70px;--duration:16s;--delay:0s;"></div>
+    <div class="bubble" style="--left:95%;--size:35px;--duration:11s;--delay:4s;"></div>
+  </div>
+
+  <nav>
+    <div class="logo" onclick="location.reload()">
+      <svg width="34" height="34" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="url(#navg)" />
+        <rect x="25" y="30" width="50" height="40" fill="none" stroke="white" stroke-width="2" />
+        <line x1="25" y1="45" x2="75" y2="45" stroke="white" stroke-width="2" />
+        <line x1="25" y1="60" x2="75" y2="60" stroke="white" stroke-width="2" />
+        <defs>
+          <linearGradient id="navg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#818cf8" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div>Time<span>Gen</span></div>
+    </div>
+    <div class="nav-right">
+      <button class="btn-logout" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <div id="content-area">
+      <!-- Welcome -->
+      <div class="welcome-header">
+        <div class="institution-badge">🏢 <span id="institutionDisplay">Institution</span></div>
+        <h1>Welcome Back, <span id="userNameDisplay">Admin</span>!</h1>
+        <p>Department: <b id="deptDisplay">Loading...</b> &nbsp;·&nbsp; Manage your academic timetables below.</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section-label">Quick Actions</div>
+      <div class="dashboard-grid">
+
+        <div class="card card-generate" onclick="showGenerate()">
+          <div class="card-icon-wrap">🏗️</div>
+          <h3>Generate Timetable</h3>
+          <p>Launch the digital form or generate a secure QR code for faculty assignment collection.</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="card card-view" onclick="window.location.href='view.html'">
+          <div class="card-icon-wrap">📅</div>
+          <h3>View Timetables</h3>
+          <p>Access department-wise schedules, teacher-specific views, and export official PDFs.</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="card card-analytics" onclick="window.location.href='view.html?view=analytics'">
+          <div class="card-icon-wrap">📊</div>
+          <h3>Workload Analytics</h3>
+          <p>Monitor faculty teaching hours, balance distribution, and ensure institutional efficiency.</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="card card-reset" onclick="resetDatabase()">
+          <div class="card-icon-wrap">🔄</div>
+          <h3>Start New Semester</h3>
+          <p>Securely wipe existing assignments to begin fresh for the upcoming academic session.</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+      </div>
+
+      <!-- Stats -->
+      <div class="section-label" style="margin-top:40px;">System Overview</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">📆</div>
+          <div class="stat-value">6</div>
+          <div class="stat-label">Days / Week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏛️</div>
+          <div class="stat-value">4</div>
+          <div class="stat-label">Semesters</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value">4</div>
+          <div class="stat-label">Classes / Subject</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value">Auto</div>
+          <div class="stat-label">Clash Detection</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📱</div>
+          <div class="stat-value">QR</div>
+          <div class="stat-label">Mobile Accessible</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Action completed successfully!</div>
+
+  <script>
+    // Session Protection
+    (function () {
+      if (!sessionStorage.getItem('token')) window.location.replace('index.html');
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('userNameDisplay').textContent = sessionStorage.getItem('userName') || 'Admin';
+      document.getElementById('deptDisplay').textContent = sessionStorage.getItem('department') || 'General';
+      document.getElementById('institutionDisplay').textContent = sessionStorage.getItem('institution') || 'Educational Institution';
+    });
+
+    async function showGenerate() {
+      const dept = sessionStorage.getItem('department') || 'BCA';
+
+      document.getElementById('content-area').innerHTML = `
+        <div class="back-btn" onclick="location.reload()" id="backBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Dashboard
+        </div>
+        <div class="generate-panel">
+          <h1 style="font-size:36px;font-weight:800;margin-bottom:10px;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Faculty QR Form</h1>
+          <p id="loadingText" style="color:#38bdf8;font-size:18px;margin:20px 0;">⏳ Connecting to secure Internet Tunnel...</p>
+        </div>
+      `;
+
+      let lanUrl = '';
+      let tunnelUrl = '';
+
+      try {
+        const res = await fetch('/get-public-url');
+        const data = await res.json();
+        lanUrl = data.lanUrl ? data.lanUrl : window.location.origin;
+        tunnelUrl = data.tunnelUrl || '';
+      } catch (e) {
+        lanUrl = window.location.origin;
+        tunnelUrl = '';
+      }
+
+      const formLanUrl = `${lanUrl}/form.html?dept=${dept}`;
+      const formTunnelUrl = tunnelUrl ? `${tunnelUrl}/form.html?dept=${dept}` : '';
+
+      // Prioritize the tunnel URL if it exists because it works over mobile data
+      const primaryUrl = formTunnelUrl || formLanUrl;
+      const isTunnelConnected = !!tunnelUrl;
+
+      document.getElementById('content-area').innerHTML = `
+        <div class="back-btn" onclick="location.reload()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Dashboard
+        </div>
+        <div class="generate-panel">
+          <h1 style="font-size:36px;font-weight:800;margin-bottom:10px;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent;">Faculty QR Form</h1>
+          
+          ${isTunnelConnected ? '<div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px; color: #a7f3d0; font-size: 14px; text-align: left;"><strong>✅ Public Form URL Ready:</strong><br>This link works from any network, including phone data or another Wi-Fi.</div>' : '<div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px; color: #f43f5e; font-size: 14px; text-align: left;"><strong>⚠️ Public tunnel is not available:</strong><br>Only the local Wi-Fi link works now, and your phone must be on the same network.</div>'}
+
+          <p style="color:#94a3b8;max-width:580px;margin:0 auto 20px;font-size:15px;line-height:1.7;">Share this QR with faculty to scan on their phone. (Department: <strong style="color:#38bdf8">${dept}</strong>)</p>
+          <div id="qrcode"></div>
+          
+          <a href="${primaryUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:16px;font-size:14px;color:#38bdf8;word-break:break-all;max-width:500px;margin:14px auto 0;font-weight:bold;text-decoration:none;">${primaryUrl}</a>
+          
+          <div style="margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+            <a href="${primaryUrl}" target="_blank" rel="noopener noreferrer" class="emerald-btn">✨ Launch Digital Form</a>
+            <button onclick="navigator.clipboard.writeText('${primaryUrl}').then(()=>showToast('Link copied!'))"
+              style="padding:16px 28px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;border-radius:50px;font-weight:700;font-size:14px;cursor:pointer;transition:0.3s;"
+              onmouseover="this.style.background='rgba(56,189,248,0.2)'" onmouseout="this.style.background='rgba(56,189,248,0.1)'">
+              📋 Copy Link
+            </button>
+          </div>
+
+          <div style="margin-top:30px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
+            <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Fallback Local Wi-Fi Link (Only works if on the same Wi-Fi):</p>
+            <a href="${formLanUrl}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:#94a3b8; word-break:break-all; text-decoration:none;">${formLanUrl}</a>
+          </div>
+        </div>
+      `;
+
+      new QRCode(document.getElementById("qrcode"), {
+        text: primaryUrl, width: 220, height: 220,
+        colorDark: "#0f172a", colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    async function resetDatabase() {
+      if (!confirm('Are you absolutely sure you want to WIPE all assignments for this department? This action cannot be undone.')) return;
+      const dept = sessionStorage.getItem('department');
+      try {
+        const res = await fetch(`/reset-db?department=${dept}`, { method: 'DELETE' });
+        if (res.ok) showToast('Database wiped! Ready for new semester.');
+        else alert('Failed to reset database');
+      } catch (e) {
+        alert('Error connecting to server');
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.replace('index.html');
+    });
+
+    window.addEventListener('pageshow', () => {
+      if (!sessionStorage.getItem('token')) {
+        window.location.replace('index.html');
+      }
+    });
+  </script>
+</body>
+
+</html>

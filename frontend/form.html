@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeGen | Faculty Assignment Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #38bdf8;
+        --secondary: #818cf8;
+        --dark: #0f172a;
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --error: #f43f5e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+    body {
+        background: linear-gradient(-45d
+        eg, #0f172a, #1e293b, #0f172a, #1a1040);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        color: white;
+        min-height: 100vh;
+        padding: 40px 20px;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .container {
+        max-width: 1300px;
+        margin: 0 auto;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        padding: 50px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+
+    .header { text-align: center; margin-bottom: 40px; }
+    .header h1 { font-size: 36px; font-weight: 800; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .teacher-section {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 25px;
+        border-radius: 18px;
+        margin-bottom: 35px;
+        border: 1px solid var(--glass-border);
+    }
+
+    label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+    input, select {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        padding: 14px 18px;
+        color: white;
+        font-size: 15px;
+        transition: 0.3s;
+        outline: none;
+    }
+    select option { background: #0f172a; color: white; }
+    input:focus, select:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.08); }
+
+    .assignment-row {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr 2fr 1.5fr 50px;
+        gap: 20px;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 25px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        border: 1px solid var(--glass-border);
+        align-items: start;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Checkbox Group Styling */
+    .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 5px;
+    }
+
+    .checkbox-item {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        border: 1px solid var(--glass-border);
+        font-size: 14px;
+        font-weight: 600;
+        user-select: none;
+    }
+
+    .checkbox-item input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0; width: 0;
+    }
+
+    .checkbox-item:hover { background: rgba(255, 255, 255, 0.1); }
+
+    .checkbox-item input:checked + span { color: var(--primary); }
+    .checkbox-item.checked { background: rgba(56, 189, 248, 0.1); border-color: var(--primary); color: var(--primary); }
+
+    .checkbox-item.booked {
+        border-color: var(--error);
+        color: var(--error);
+        opacity: 0.8;
+        background: rgba(244, 63, 94, 0.05);
+    }
+
+    .btn-add {
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--primary);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 12px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: 0.3s;
+        display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-add:hover { background: var(--primary); color: var(--dark); }
+
+    .btn-remove {
+        background: rgba(244, 63, 94, 0.1);
+        color: var(--error);
+        border: 1px solid rgba(244, 63, 94, 0.3);
+        width: 42px; height: 42px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        margin-top: 24px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 16px;
+        color: var(--dark);
+        font-weight: 800;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 40px;
+        box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3);
+    }
+</style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Faculty Assignment Form</h1>
+            <p id="deptDisplay">Department: Loading...</p>
+        </div>
+
+        <div class="teacher-section">
+            <label>Full Name of Teacher</label>
+            <input type="text" id="teacherName" placeholder="e.g. Dr. Jane Smith" required>
+        </div>
+
+        <div id="assignmentContainer"></div>
+
+        <button class="btn-add" onclick="addRow()">+ Add Another Subject</button>
+        <button class="btn-submit" onclick="submitAssignments()">Confirm & Submit Assignments</button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const dept = urlParams.get('dept') || 'BCA';
+        document.getElementById('deptDisplay').textContent = `Department: ${dept}`;
+
+        const subjectsByDept = {
+            "BCA": {
+                "1": ["English", "Kannada", "Hindi", "C", "Web Technology", "Mathematics", "Statistics", "Web Technology Lab", "C Lab"],
+                "2": ["DBMS", "Digital Electronics", "Environmental Studies", "Java", "Operating System", "Java Lab", "DBMS Lab"],
+                "3": ["Indian Constitution", "Python", "Advanced Java", "DAA", "Python Lab", "Advanced Java Lab"],
+                "4": ["Cloud Computing", "Data Science with Python", "Computer Networks", "Cloud Computing Lab", "Data Science Lab"],
+                "5": ["Software Testing and Engineering", "Android", "Cyber Security", "Data Science", "Software Testing Lab", "Android Lab"],
+                "6": ["Cryptography", "Blockchain", "Artificial Intelligence", "Big Data", "Big Data Lab", "AI Lab"]
+            },
+            "BSc": {
+                "1": ["English", "Kannada", "Hindi", "Physics", "Chemistry", "Mathematics", "Physics Lab", "Chemistry Lab"],
+                "2": ["English", "Kannada", "Hindi", "Physics", "Chemistry", "Mathematics", "Physics Lab", "Chemistry Lab"],
+                "3": ["Physics", "Chemistry", "Mathematics", "Computer Science", "Physics Lab", "Chemistry Lab"],
+                "4": ["Physics", "Chemistry", "Mathematics", "Computer Science", "Physics Lab", "Chemistry Lab"],
+                "5": ["Physics Core", "Chemistry Core", "Mathematics Core"],
+                "6": ["Physics Advanced", "Chemistry Advanced", "Mathematics Advanced"]
+            },
+            "BCom": {
+                "1": ["English", "Kannada", "Hindi", "Financial Accounting", "Business Management"],
+                "2": ["English", "Kannada", "Hindi", "Advanced Accounting", "Business Environment"],
+                "3": ["Corporate Accounting", "Business Statistics", "Income Tax"],
+                "4": ["Cost Accounting", "Corporate Law", "E-Commerce"],
+                "5": ["Auditing", "Financial Management", "GST"],
+                "6": ["Management Accounting", "Business Economics", "International Business"]
+            }
+        };
+
+        const defaultSubjects = {
+            "1": ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"],
+            "2": ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"],
+            "3": ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"],
+            "4": ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"],
+            "5": ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"],
+            "6": ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"]
+        };
+
+        const subjectsBySem = subjectsByDept[dept] || defaultSubjects;
+
+        let bookedAssignments = [];
+
+        async function fetchBookings() {
+            try {
+                const res = await fetch(`/get-assignments?department=${dept}`);
+                bookedAssignments = await res.json();
+            } catch (e) { console.error("Update error"); }
+        }
+
+        function addRow() {
+            const container = document.getElementById('assignmentContainer');
+            const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
+            const row = document.createElement('div');
+            row.className = 'assignment-row';
+            row.id = rowId;
+
+            row.innerHTML = `
+                <div>
+                    <label>Semester</label>
+                    <select class="sem-select" onchange="updateRowSubjects('${rowId}')">
+                        <option value="1">Sem 1</option>
+                        <option value="2">Sem 2</option>
+                        <option value="3">Sem 3</option>
+                        <option value="4">Sem 4</option>
+                        <option value="5">Sem 5</option>
+                        <option value="6">Sem 6</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Divisions</label>
+                    <div class="checkbox-group">
+                        ${['A', 'B', 'C', 'D'].map(d => `
+                            <label class="checkbox-item" id="label-${rowId}-${d}">
+                                <input type="checkbox" value="${d}" onchange="checkBooking('${rowId}', '${d}')">
+                                <span>Div ${d}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div>
+                    <label>Subject</label>
+                    <select class="sub-select" onchange="resetAndCheckAll('${rowId}')"></select>
+                </div>
+                <div>
+                    <label>Teaching Type</label>
+                    <select class="type-select">
+                        <option value="Theory">Theory Only</option>
+                        <option value="Lab">Lab Only</option>
+                        <option value="Lab+Theory">Lab + Theory</option>
+                    </select>
+                </div>
+                <button class="btn-remove" onclick="removeRow('${rowId}')">✕</button>
+            `;
+
+            container.appendChild(row);
+            updateRowSubjects(rowId);
+        }
+
+        function updateRowSubjects(rowId) {
+            const row = document.getElementById(rowId);
+            const sem = row.querySelector('.sem-select').value;
+            const subSelect = row.querySelector('.sub-select');
+            subSelect.innerHTML = (subjectsBySem[sem] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+            resetAndCheckAll(rowId);
+        }
+
+        function resetAndCheckAll(rowId) {
+            const row = document.getElementById(rowId);
+            const checkboxes = row.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                const div = cb.value;
+                const label = document.getElementById(`label-${rowId}-${div}`);
+                cb.checked = false;
+                label.classList.remove('checked', 'booked');
+            });
+        }
+
+        function checkBooking(rowId, div) {
+            const row = document.getElementById(rowId);
+            const sem = row.querySelector('.sem-select').value;
+            const sub = row.querySelector('.sub-select').value;
+            const cb = row.querySelector(`input[value="${div}"]`);
+            const label = document.getElementById(`label-${rowId}-${div}`);
+
+            if (cb.checked) {
+                const isBooked = bookedAssignments.find(a => 
+                    a.semester === sem && a.division === div && a.subject === sub
+                );
+
+                if (isBooked) {
+                    cb.checked = false;
+                    label.classList.add('booked');
+                    alert(`🛑 BOOKING CONFLICT!\n\n"${sub}" for Sem ${sem} - Div ${div} is already taken by Prof. ${isBooked.teacherName}.\n\nPlease choose a different division.`);
+                } else {
+                    label.classList.add('checked');
+                    label.classList.remove('booked');
+                }
+            } else {
+                label.classList.remove('checked', 'booked');
+            }
+        }
+
+        function removeRow(id) {
+            if (document.querySelectorAll('.assignment-row').length > 1) {
+                document.getElementById(id).remove();
+            } else { alert("At least one row required."); }
+        }
+
+        async function submitAssignments() {
+            const teacherName = document.getElementById('teacherName').value.trim();
+            if (!teacherName) return alert("Please enter your name.");
+
+            const rows = document.querySelectorAll('.assignment-row');
+            const assignments = [];
+            
+            for (let row of rows) {
+                const sem = row.querySelector('.sem-select').value;
+                const sub = row.querySelector('.sub-select').value;
+                const type = row.querySelector('.type-select').value;
+                const checkedDivs = Array.from(row.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+                if (checkedDivs.length === 0) continue;
+
+                checkedDivs.forEach(div => {
+                    assignments.push({ department: dept, teacherName, semester: sem, division: div, subject: sub, type });
+                });
+            }
+
+            if (assignments.length === 0) return alert("Please select at least one division.");
+
+            try {
+                const res = await fetch('/submit-assignment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(assignments)
+                });
+
+                if (res.status === 409) {
+                    const data = await res.json();
+                    alert(`Conflict: ${data.clashes[0].subject} in Div ${data.clashes[0].division} was just taken!`);
+                    await fetchBookings();
+                } else if (res.ok) {
+                    // Full page success message as requested
+                    document.body.innerHTML = `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px;">
+                            <div style="font-size:80px; margin-bottom:20px; animation: bounce 1s ease infinite;">✅</div>
+                            <h1 style="font-size:36px; font-weight:800; background:linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom:15px;">Thank You!</h1>
+                            <h2 style="font-size:24px; color:white; margin-bottom:10px;">Submission Success</h2>
+                            <p style="font-size:18px; color:#94a3b8; max-width:500px;">You have successfully submitted your subject assignments. You can close this tab now.</p>
+                            <style>
+                                @keyframes bounce {
+                                    0%, 100% { transform: translateY(0); }
+                                    50% { transform: translateY(-20px); }
+                                }
+                            </style>
+                        </div>
+                    `;
+                }
+            } catch (e) { alert("Error connecting to server."); }
+        }
+
+        fetchBookings().then(() => addRow());
+        setInterval(fetchBookings, 15000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeGen | View Timetables</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+    :root {
+        --primary: #38bdf8;
+        --secondary: #818cf8;
+        --emerald: #10b981;
+        --dark: #0f172a;
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+    body {
+        background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1e1b4b);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        color: white;
+        min-height: 100vh;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+        50% { background-position: 100% 50%; filter: hue-rotate(30deg); }
+        100% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+    }
+
+    /* Bubbles Animation */
+    .bubbles {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .bubble {
+        position: absolute;
+        bottom: -100px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        animation: rise var(--duration) infinite ease-in;
+        animation-delay: var(--delay);
+        left: var(--left);
+        width: var(--size);
+        height: var(--size);
+    }
+    @keyframes rise {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        50% { opacity: 0.3; }
+        100% { transform: translateY(-120vh) rotate(720deg); opacity: 0; }
+    }
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 40px;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid var(--glass-border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; cursor: pointer; text-decoration: none; color: white; }
+    .logo span { color: var(--primary); }
+
+    .nav-right { display: flex; gap: 12px; align-items: center; }
+
+    .btn-dashboard {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 22px;
+        background: rgba(129, 140, 248, 0.12);
+        color: #818cf8;
+        border: 1px solid rgba(129, 140, 248, 0.35);
+        border-radius: 50px;
+        font-weight: 700; font-size: 13px;
+        text-decoration: none;
+        transition: 0.3s; cursor: pointer;
+        letter-spacing: 0.3px;
+    }
+    .btn-dashboard:hover {
+        background: #818cf8; color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(129,140,248,0.35);
+    }
+
+    .main-container { padding: 40px; max-width: 1400px; margin: 0 auto; }
+
+    .header-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .tabs {
+        display: flex;
+        background: var(--glass);
+        padding: 5px;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
+    }
+    .tab {
+        padding: 10px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: 0.3s;
+        color: #94a3b8;
+    }
+    .tab.active {
+        background: var(--primary);
+        color: var(--dark);
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-download {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 22px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700; font-size: 13px;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        letter-spacing: 0.3px;
+    }
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45); }
+
+    .timetable-section {
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 30px;
+        margin-bottom: 40px;
+        animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .semester-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--primary);
+        display: inline-block;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+        gap: 30px;
+    }
+
+    .table-container {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid var(--glass-border);
+    }
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .table-header h4 { font-size: 18px; color: var(--primary); }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+    th, td {
+        border: 1px solid var(--glass-border);
+        padding: 10px;
+        text-align: center;
+    }
+    th { background: rgba(56, 189, 248, 0.1); color: var(--primary); font-weight: 700; }
+    
+    .subject { font-weight: 700; color: white; display: block; }
+    .teacher { font-size: 10px; color: #64748b; }
+    .lab { color: var(--emerald); font-style: italic; }
+    .break { background: rgba(255, 255, 255, 0.05); color: #475569; font-weight: 600; }
+
+    #loading { text-align: center; padding: 100px; font-size: 20px; color: #94a3b8; }
+
+    /* PDF Specific Styling */
+    .pdf-mode { color: black !important; background: white !important; }
+    .pdf-mode th { background: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; color: #1e293b !important; }
+    .pdf-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
+    .pdf-mode .subject { color: #0f172a !important; }
+    .pdf-mode .semester-title { border-bottom: 2px solid #0284c7 !important; color: #0f172a !important; }
+</style>
+</head>
+<body>
+  <div class="bubbles">
+    <div class="bubble" style="--left: 5%; --size: 80px; --duration: 12s; --delay: 0s;"></div>
+    <div class="bubble" style="--left: 15%; --size: 20px; --duration: 8s; --delay: 2s;"></div>
+    <div class="bubble" style="--left: 25%; --size: 50px; --duration: 15s; --delay: 4s;"></div>
+    <div class="bubble" style="--left: 35%; --size: 30px; --duration: 10s; --delay: 1s;"></div>
+    <div class="bubble" style="--left: 45%; --size: 100px; --duration: 20s; --delay: 3s;"></div>
+    <div class="bubble" style="--left: 55%; --size: 40px; --duration: 12s; --delay: 5s;"></div>
+    <div class="bubble" style="--left: 65%; --size: 60px; --duration: 18s; --delay: 2s;"></div>
+    <div class="bubble" style="--left: 75%; --size: 25px; --duration: 9s; --delay: 3s;"></div>
+    <div class="bubble" style="--left: 85%; --size: 70px; --duration: 16s; --delay: 0s;"></div>
+    <div class="bubble" style="--left: 95%; --size: 35px; --duration: 11s; --delay: 4s;"></div>
+  </div>
+  <nav>
+    <a href="dashboard.html" class="logo">
+        <svg width="34" height="34" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="url(#navgrad)" />
+            <rect x="25" y="30" width="50" height="40" fill="none" stroke="white" stroke-width="2"/>
+            <line x1="25" y1="45" x2="75" y2="45" stroke="white" stroke-width="2"/>
+            <line x1="25" y1="60" x2="75" y2="60" stroke="white" stroke-width="2"/>
+            <defs>
+                <linearGradient id="navgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#818cf8"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <div>Time<span>Gen</span></div>
+    </a>
+    <div class="nav-right">
+        <a href="dashboard.html" class="btn-dashboard">🏠 Dashboard</a>
+        <button class="btn-download" onclick="downloadAllPDF()">📥 Download PDF</button>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <div class="header-controls">
+        <div class="tabs">
+            <div class="tab active" id="tabClass" onclick="switchView('class')">By Class</div>
+            <div class="tab" id="tabTeacher" onclick="switchView('teacher')">By Teacher</div>
+            <div class="tab" id="tabAnalytics" onclick="switchView('analytics')">Analytics</div>
+        </div>
+        <div id="status-msg" style="text-align: right;">
+            <div id="instName" style="font-size: 18px; font-weight: 700; color: white;">...</div>
+            <div style="color: var(--secondary); font-weight: 600;">Dept: <span id="deptName">...</span></div>
+        </div>
+    </div>
+
+    <div id="loading">✨ Generating Optimized Schedule...</div>
+    <div id="timetable-content"></div>
+  </div>
+
+  <script>
+    // Session Protection
+    (function() {
+        if (!sessionStorage.getItem('token')) window.location.replace('index.html');
+    })();
+
+    let currentView = 'class';
+    let globalTimetable = [];
+    const dept = sessionStorage.getItem('department') || 'BCA';
+    const inst = sessionStorage.getItem('institution') || 'University';
+    document.getElementById('deptName').textContent = dept;
+    document.getElementById('instName').textContent = inst;
+
+    // Check for query param view
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialView = urlParams.get('view');
+    if (initialView) setTimeout(() => switchView(initialView), 100);
+
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const slots = ["08:30-09:30", "09:30-10:30", "10:30-11:00", "11:00-12:00", "12:00-01:00", "01:00-02:00", "02:00-03:00", "03:00-04:00"];
+
+    async function fetchTimetables() {
+        try {
+            const res = await fetch(`/generate-timetable?department=${dept}`);
+            if (!res.ok) throw new Error('Failed to generate');
+            const data = await res.json();
+            globalTimetable = data;
+            renderView();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('loading').textContent = '❌ Error generating timetable. Ensure faculty have submitted assignments.';
+        }
+    }
+
+    function switchView(view) {
+        currentView = view;
+        document.getElementById('tabClass').classList.toggle('active', view === 'class');
+        document.getElementById('tabTeacher').classList.toggle('active', view === 'teacher');
+        document.getElementById('tabAnalytics').classList.toggle('active', view === 'analytics');
+        renderView();
+    }
+
+    function renderView() {
+        const container = document.getElementById('timetable-content');
+        container.innerHTML = '';
+        document.getElementById('loading').style.display = 'none';
+
+        if (globalTimetable.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 100px 20px;">
+                    <div style="font-size: 60px; margin-bottom: 20px;">📅</div>
+                    <h2 style="font-size: 32px; color: white; margin-bottom: 10px;">No Timetable Created Yet</h2>
+                    <p style="color: #94a3b8; max-width: 500px; margin: 0 auto 30px;">We couldn't find any faculty assignments for the <b>${dept}</b> department. Please ensure teachers have submitted the "Faculty Assignment" form before generating.</p>
+                    <a href="dashboard.html" class="btn-download" style="text-decoration: none; padding: 12px 30px; display: inline-block;">Back to Dashboard</a>
+                </div>
+            `;
+            return;
+        }
+
+        if (currentView === 'class') {
+            const sems = [...new Set(globalTimetable.map(a => a.semester))].sort();
+            sems.forEach(sem => {
+                const semSection = document.createElement('div');
+                semSection.className = 'timetable-section';
+                semSection.innerHTML = `<h2 class="semester-title">Semester ${sem}</h2>`;
+                
+                const grid = document.createElement('div');
+                grid.className = 'grid-container';
+                
+                const divs = [...new Set(globalTimetable.filter(a => a.semester === sem).map(a => a.division))].sort();
+                divs.forEach(div => {
+                    grid.appendChild(createTableCard(`Semester ${sem} - Div ${div}`, 'class', { sem, div }));
+                });
+                
+                semSection.appendChild(grid);
+                container.appendChild(semSection);
+            });
+        } else if (currentView === 'analytics') {
+            const section = document.createElement('div');
+            section.className = 'timetable-section';
+            section.innerHTML = `
+                <h2 class="semester-title">Faculty Workload Analysis</h2>
+                <div class="table-container" style="margin-top: 20px;">
+                    <table style="font-size: 14px;">
+                        <thead>
+                            <tr>
+                                <th>Faculty Name</th>
+                                <th>Theory Sessions</th>
+                                <th>Lab Sessions</th>
+                                <th>Total Weekly Hours</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analyticsBody"></tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(section);
+            renderAnalytics();
+        } else {
+            const teachers = [...new Set(globalTimetable.map(a => a.teacherName))].sort();
+            const section = document.createElement('div');
+            section.className = 'timetable-section';
+            section.innerHTML = `<h2 class="semester-title">Faculty Weekly Schedules</h2>`;
+            
+            const grid = document.createElement('div');
+            grid.className = 'grid-container';
+            
+            teachers.forEach(teacher => {
+                grid.appendChild(createTableCard(teacher, 'teacher', { teacher }));
+            });
+            
+            section.appendChild(grid);
+            container.appendChild(section);
+        }
+    }
+
+    function renderAnalytics() {
+        const teachers = [...new Set(globalTimetable.map(a => a.teacherName))].sort();
+        const tbody = document.getElementById('analyticsBody');
+        
+        teachers.forEach(t => {
+            const teacherEntries = globalTimetable.filter(e => e.teacherName === t);
+            
+            // Each entry represents 1 hour.
+            const totalHours = teacherEntries.length;
+            
+            // In a real app, we'd distinguish sessions, but for now Total Hours is the most critical metric.
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 700; color: white;">${t}</td>
+                <td>-</td>
+                <td>-</td>
+                <td style="font-size: 18px; color: var(--primary); font-weight: 700;">${totalHours} hrs</td>
+                <td><span style="padding: 4px 10px; border-radius: 20px; background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 12px;">Balanced</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function createTableCard(title, mode, filter) {
+        const card = document.createElement('div');
+        card.className = 'table-container';
+        
+        // Define clean labels for the horizontal time axis
+        const displaySlots = slots.map(s => {
+            if (s === "10:30-11:00") return "10:30 (Break)";
+            if (s === "01:00-02:00") return "01:00 (Lunch)";
+            return s;
+        });
+
+        card.innerHTML = `
+            <div class="table-header">
+                <h4>${title}</h4>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            ${displaySlots.map(s => `<th>${s}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${days.map(day => {
+                            return `
+                                <tr>
+                                    <td style="font-weight: 700; color: var(--primary); background: rgba(56, 189, 248, 0.05);">${day}</td>
+                                    ${slots.map(slot => {
+                                        if (slot === "10:30-11:00" || slot === "01:00-02:00") {
+                                            return `<td class="break-cell" style="background: rgba(255, 255, 255, 0.02); color: #475569; font-size: 10px; writing-mode: vertical-lr; text-orientation: mixed;">BREAK</td>`;
+                                        }
+                                        
+                                        const entry = globalTimetable.find(e => 
+                                            e.day === day && 
+                                            e.slot === slot && 
+                                            (mode === 'class' ? (e.semester === filter.sem && e.division === filter.div) : (e.teacherName === filter.teacher))
+                                        );
+
+                                        if (!entry) return '<td>-</td>';
+                                        
+                                        return `
+                                            <td style="min-width: 120px;">
+                                                <span class="subject ${entry.type === 'Lab' ? 'lab' : ''}">${entry.subject}</span>
+                                                <span class="teacher" style="font-size: 11px; display: block; margin-top: 4px; color: #94a3b8;">
+                                                    ${mode === 'class' ? `👨‍🏫 ${entry.teacherName}` : `🎓 Sem ${entry.semester} Div ${entry.division}`}
+                                                </span>
+                                                <span style="font-size: 10px; color: #64748b; display: block;">📍 ${entry.room || 'Room TBD'}</span>
+                                            </td>
+                                        `;
+                                    }).join('')}
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        return card;
+    }
+
+    function downloadAllPDF() {
+        const element = document.getElementById('timetable-content');
+        // Add PDF styles temporarily
+        const sections = document.querySelectorAll('.timetable-section');
+        sections.forEach(s => s.classList.add('pdf-mode'));
+        
+        const opt = {
+            margin: [10, 10],
+            filename: `${dept}_Timetables_Full.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            sections.forEach(s => s.classList.remove('pdf-mode'));
+        });
+    }
+
+    fetchTimetables();
+
+    window.addEventListener('pageshow', () => {
+      if (!sessionStorage.getItem('token')) {
+        window.location.replace('index.html');
+      }
+    });
+  </script>
+</body>
+</html>

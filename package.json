@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cloudflared": "^0.7.1",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "init": "^0.1.2",
+    "localtunnel": "^2.0.2",
+    "mongoose": "^9.6.1",
+    "nodemailer": "^8.0.7"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
