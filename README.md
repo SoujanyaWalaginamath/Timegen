@@ -41,11 +41,29 @@ Use these when you deploy:
 - `MONGO_URI` — your MongoDB connection string
 - `PUBLIC_URL` — the public address of your app, for stable QR/link generation
 
-Example on Windows PowerShell:
+Quick local setup (recommended):
+
+1. Copy the example file and edit it:
+
+```bash
+cp .env.example .env
+# on Windows PowerShell:
+# Copy-Item .env.example .env
+```
+
+2. Open `.env` and paste your Atlas connection string into `MONGO_URI`.
+
+3. Start the app:
+
 ```powershell
-$env:MONGO_URI = 'mongodb+srv://<user>:<pass>@cluster0.mongodb.net/timetable_db?retryWrites=true&w=majority'
-$env:PUBLIC_URL = 'https://your-app.example.com'
 npm start
+```
+
+Example `.env` entry (Atlas):
+
+```env
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/timetable_db?retryWrites=true&w=majority
+PUBLIC_URL=
 ```
 
 ## How to make the QR link work on every phone

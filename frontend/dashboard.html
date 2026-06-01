@@ -778,10 +778,7 @@
         alert('Error connecting to server');
       }
     }
-Get-WindowsCapability -Online | Where-Object Name -Like 'OpenSSH*'
-# If missing:
-Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
-Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;

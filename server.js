@@ -1,4 +1,9 @@
-require('dotenv').config();
+const crypto = require('crypto');
+global.crypto = global.crypto || crypto;
+
+require('dotenv').config({ override: true });
+// Masked env debug: do not print secret contents in logs
+console.log('MONGO_URI present:', !!process.env.MONGO_URI, '| length:', process.env.MONGO_URI ? process.env.MONGO_URI.length : 0);
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
