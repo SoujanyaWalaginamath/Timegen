@@ -210,6 +210,13 @@
     .pdf-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
     .pdf-mode .subject { color: #0f172a !important; }
     .pdf-mode .semester-title { border-bottom: 2px solid #0284c7 !important; color: #0f172a !important; }
+    @media print {
+    .table-container {
+        page-break-after: always;
+        break-after: page;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -466,23 +473,45 @@
     }
 
     function downloadAllPDF() {
-        const element = document.getElementById('timetable-content');
-        // Add PDF styles temporarily
-        const sections = document.querySelectorAll('.timetable-section');
-        sections.forEach(s => s.classList.add('pdf-mode'));
-        
-        const opt = {
-            margin: [10, 10],
-            filename: `${dept}_Timetables_Full.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
+    const sections = document.querySelectorAll('.timetable-section');
 
-        html2pdf().set(opt).from(element).save().then(() => {
+    sections.forEach(s => s.classList.add('pdf-mode'));
+
+    const opt = {
+        margin: 10,
+        filename: `${dept}_Timetables_Full.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'landscape'
+        },
+        pagebreak: {
+            mode: ['css', 'legacy']
+        }
+    };
+
+    // Add page break after every table container
+    document.querySelectorAll('.table-container').forEach(table => {
+        table.style.pageBreakAfter = 'always';
+    });
+
+    html2pdf()
+        .set(opt)
+        .from(document.getElementById('timetable-content'))
+        .save()
+        .then(() => {
             sections.forEach(s => s.classList.remove('pdf-mode'));
+
+            document.querySelectorAll('.table-container').forEach(table => {
+                table.style.pageBreakAfter = '';
+            });
         });
-    }
+}
 
     fetchTimetables();
 

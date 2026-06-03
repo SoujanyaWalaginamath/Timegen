@@ -43,9 +43,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   department: { type: String, required: true },
-  resetCode: { type: String },
-  resetCodeExpires: { type: Date }
+  resetCode: String,
+  resetCodeExpires: Date
 });
+
 const User = mongoose.model("User", userSchema);
 
 const assignmentSchema = new mongoose.Schema({
@@ -90,25 +91,19 @@ const normalizeDepartment = (department) => String(department || "").trim();
 
 // Signup Route
 app.post("/signup", async (req, res) => {
-  try {
-    const { name, email, password, department } = req.body;
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email already exists" });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username: name, email, password: hashedPassword, department });
-    await newUser.save();
+try {
+const { name, email, password, department } = req.body;
 
-    const safeName = escapeHtml(name);
-    const safeEmail = escapeHtml(email);
-    const safeDepartment = escapeHtml(department);
-    const safePassword = escapeHtml(password);
+const mailOptions = {
+  from: EMAIL_USER
+    ? `"TimeGen Admin" <${EMAIL_USER}>`
+    : '"TimeGen Admin" <no-reply@example.com>',
 
-    // Send welcome email with credentials
-    const mailOptions = {
-      from: EMAIL_USER ? `"TimeGen Admin" <${EMAIL_USER}>` : '"TimeGen Admin" <no-reply@example.com>',
-      to: email, // This sends the email TO the newly registered user
-      subject: 'TimeGen Account Registration Successful',
-      text: `Dear ${name},
+  to: email,
+
+  subject: "TimeGen Account Registration Successful",
+
+  text: `Dear ${name},
 
 Your TimeGen administrator account has been created successfully.
 
@@ -119,59 +114,84 @@ Department: ${department}
 Password: ${password}
 
 Please use your registered email address and the password above to log in.
-For security, do not share this password with anyone.
 
 Regards,
 TimeGen Admin`,
-      html: `
-        <div style="font-family: Arial, sans-serif; background: #f4f7fb; padding: 24px; color: #1f2937;">
-          <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
-            <div style="background: #0f172a; color: #ffffff; padding: 20px 24px;">
-              <h2 style="margin: 0; font-size: 22px;">TimeGen Registration Successful</h2>
-            </div>
-            <div style="padding: 24px;">
-              <p style="margin-top: 0;">Dear ${safeName},</p>
-              <p>Your TimeGen administrator account has been created successfully.</p>
-              <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                <tr>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Name</td>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb;">${safeName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Email</td>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb;">${safeEmail}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Department</td>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb;">${safeDepartment}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Password</td>
-                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-family: monospace;">${safePassword}</td>
-                </tr>
-              </table>
-              <p>Please use your registered email address and the password above to log in.</p>
-              <p style="font-size: 13px; color: #6b7280;">For security, do not share this password with anyone.</p>
-              <p style="margin-bottom: 0;">Regards,<br>TimeGen Admin</p>
-            </div>
-          </div>
-        </div>`
-    };
 
-    await transporter.sendMail(mailOptions);
-    console.log("[Email] Welcome email sent successfully to registered email.");
+  html: `
+  <div style="font-family: Arial, sans-serif; background: #f4f7fb; padding: 24px; color: #1f2937;">
+    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
 
-    console.log(`[New User] Name: ${name} | Email: ${email} | Password: ${password}`);
+      <div style="background: #0f172a; color: white; padding: 20px;">
+        <h2>TimeGen Registration Successful</h2>
+      </div>
 
-    res.json({
-      message: "Signup successful. Password has been sent to your email.",
-      userName: name,
-      department: department
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+      <div style="padding: 24px;">
+        <p>Dear ${safeName},</p>
+
+        <p>Your TimeGen administrator account has been created successfully.</p>
+
+        <table style="width:100%; border-collapse:collapse;">
+          <tr>
+            <td style="padding:10px; border:1px solid #ddd;"><b>Name</b></td>
+            <td style="padding:10px; border:1px solid #ddd;">${safeName}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px; border:1px solid #ddd;"><b>Email</b></td>
+            <td style="padding:10px; border:1px solid #ddd;">${safeEmail}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px; border:1px solid #ddd;"><b>Department</b></td>
+            <td style="padding:10px; border:1px solid #ddd;">${safeDepartment}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px; border:1px solid #ddd;"><b>Password</b></td>
+            <td style="padding:10px; border:1px solid #ddd;">${safePassword}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top:20px;">
+          Please use your registered email address and password to log in.
+        </p>
+
+        <p>Regards,<br>TimeGen Admin</p>
+      </div>
+
+    </div>
+  </div>`
+};
+
+try {
+  await transporter.sendMail(mailOptions);
+  console.log("[Email] Welcome email sent successfully.");
+} catch (mailError) {
+  console.error("[Email Error]", mailError.message);
+}
+
+console.log(
+  `[New User] Name: ${name} | Email: ${email} | Department: ${department}`
+);
+
+res.status(201).json({
+  success: true,
+  message: "Account created successfully",
+  userName: name,
+  department
 });
+```
+
+} catch (err) {
+console.error("[Signup Error]", err);
+res.status(500).json({
+success: false,
+message: err.message
+});
+}
+});
+
 
 // Login Route
 app.post("/login", async (req, res) => {
