@@ -210,12 +210,24 @@
     .pdf-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
     .pdf-mode .subject { color: #0f172a !important; }
     .pdf-mode .semester-title { border-bottom: 2px solid #0284c7 !important; color: #0f172a !important; }
-    @media print {
+   @media print {
+
     .table-container {
         page-break-after: always;
         break-after: page;
     }
+
+    table {
+        width: 100% !important;
+    }
+
+    th,
+    td {
+        padding: 5px !important;
+        font-size: 10px !important;
+    }
 }
+
 
 </style>
 </head>
@@ -472,15 +484,38 @@
         return card;
     }
 
-    function downloadAllPDF() {
-    const sections = document.querySelectorAll('.timetable-section');
+    async function downloadAllPDF() {
 
-    sections.forEach(s => s.classList.add('pdf-mode'));
+    const pdfContainer = document.createElement("div");
 
-    const opt = {
-        margin: 10,
-        filename: `${dept}_Timetables_Full.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+    const tables = document.querySelectorAll(".table-container");
+
+    tables.forEach(table => {
+
+        const page = document.createElement("div");
+
+        page.style.width = "1120px";
+        page.style.minHeight = "750px";
+        page.style.background = "white";
+        page.style.padding = "15px";
+        page.style.pageBreakAfter = "always";
+
+        const clone = table.cloneNode(true);
+
+        clone.style.background = "white";
+        clone.style.color = "black";
+
+        page.appendChild(clone);
+        pdfContainer.appendChild(page);
+    });
+
+    const options = {
+        margin: 5,
+        filename: `${dept}_Timetables.pdf`,
+        image: {
+            type: 'jpeg',
+            quality: 1
+        },
         html2canvas: {
             scale: 2,
             useCORS: true
@@ -491,27 +526,16 @@
             orientation: 'landscape'
         },
         pagebreak: {
-            mode: ['css', 'legacy']
+            mode: ['css']
         }
     };
 
-    // Add page break after every table container
-    document.querySelectorAll('.table-container').forEach(table => {
-        table.style.pageBreakAfter = 'always';
-    });
-
-    html2pdf()
-        .set(opt)
-        .from(document.getElementById('timetable-content'))
-        .save()
-        .then(() => {
-            sections.forEach(s => s.classList.remove('pdf-mode'));
-
-            document.querySelectorAll('.table-container').forEach(table => {
-                table.style.pageBreakAfter = '';
-            });
-        });
+    await html2pdf()
+        .set(options)
+        .from(pdfContainer)
+        .save();
 }
+
 
     fetchTimetables();
 
