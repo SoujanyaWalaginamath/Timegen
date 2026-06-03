@@ -304,7 +304,7 @@
     });
 
     async function handleForgotPassword() {
-        const email = prompt("Enter your registered email address to receive a new password:");
+        const email = prompt("Enter your registered email address to receive a verification code:");
         if (!email) return;
 
         try {
@@ -315,7 +315,31 @@
             });
             const data = await response.json();
             if (response.ok) {
-                alert("A new temporary password has been sent to your email address.");
+                alert(data.message || "Verification code sent! Please check your email.");
+
+                const code = prompt("Enter the verification code sent to your email:");
+                if (!code) return;
+
+                const newPassword = prompt("Enter your new password:");
+                if (!newPassword) return;
+
+                const confirmPassword = prompt("Confirm your new password:");
+                if (newPassword !== confirmPassword) {
+                    alert("Passwords do not match. Please try again.");
+                    return;
+                }
+
+                const resetResponse = await fetch('/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code, newPassword })
+                });
+                const resetData = await resetResponse.json();
+                if (resetResponse.ok) {
+                    alert(resetData.message || "Password reset successful. Please log in with your new password.");
+                } else {
+                    alert(resetData.message || "Failed to reset password.");
+                }
             } else {
                 alert(data.message || "Failed to reset password.");
             }

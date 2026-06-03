@@ -329,14 +329,8 @@
 
             const data = await response.json();
             if (response.ok) {
-                // Auto-login after signup
-                sessionStorage.setItem('token', data.token);
-                sessionStorage.setItem('userName', data.userName);
-                sessionStorage.setItem('department', data.department);
-                sessionStorage.setItem('institution', 'TimeGen Academy'); // Default for now
-                
-                alert('Account created successfully! Taking you to your dashboard...');
-                window.location.href = 'dashboard.html';
+                alert(data.message || 'Account created successfully! Your password has been sent to your email. Please log in.');
+                window.location.href = 'login.html';
             } else {
                 alert(data.message || 'Signup failed');
             }

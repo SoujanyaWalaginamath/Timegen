@@ -42,7 +42,9 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  department: { type: String, required: true }
+  department: { type: String, required: true },
+  resetCode: { type: String },
+  resetCodeExpires: { type: Date }
 });
 const User = mongoose.model("User", userSchema);
 
@@ -75,6 +77,17 @@ if (EMAIL_USER && EMAIL_PASS) {
   console.warn('[Email] WARNING: EMAIL_USER or EMAIL_PASS not set. Emails will not be sent; using jsonTransport fallback.');
 }
 
+const escapeHtml = (value) =>
+  String(value || "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+
+const normalizeDepartment = (department) => String(department || "").trim();
+
 // Signup Route
 app.post("/signup", async (req, res) => {
   try {
@@ -85,29 +98,75 @@ app.post("/signup", async (req, res) => {
     const newUser = new User({ username: name, email, password: hashedPassword, department });
     await newUser.save();
 
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeDepartment = escapeHtml(department);
+    const safePassword = escapeHtml(password);
+
     // Send welcome email with credentials
     const mailOptions = {
       from: EMAIL_USER ? `"TimeGen Admin" <${EMAIL_USER}>` : '"TimeGen Admin" <no-reply@example.com>',
       to: email, // This sends the email TO the newly registered user
-      subject: 'Welcome to TimeGen - Registration Successful',
-      text: `Hello ${name},\n\nYou have been successfully registered to TimeGen!\n\nHere are your account details:\n- Username: ${name}\n- Registered Email: ${email}\n- Department: ${department}\n- Password: ${password}\n\n*Please use your EMAIL ADDRESS to log in to ensure you access the correct account.*\n\nPlease keep this information secure.\n\nBest regards,\nTimeGen Admin`
+      subject: 'TimeGen Account Registration Successful',
+      text: `Dear ${name},
+
+Your TimeGen administrator account has been created successfully.
+
+Account Details:
+Name: ${name}
+Email: ${email}
+Department: ${department}
+Password: ${password}
+
+Please use your registered email address and the password above to log in.
+For security, do not share this password with anyone.
+
+Regards,
+TimeGen Admin`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #f4f7fb; padding: 24px; color: #1f2937;">
+          <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+            <div style="background: #0f172a; color: #ffffff; padding: 20px 24px;">
+              <h2 style="margin: 0; font-size: 22px;">TimeGen Registration Successful</h2>
+            </div>
+            <div style="padding: 24px;">
+              <p style="margin-top: 0;">Dear ${safeName},</p>
+              <p>Your TimeGen administrator account has been created successfully.</p>
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Name</td>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb;">${safeName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Email</td>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb;">${safeEmail}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Department</td>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb;">${safeDepartment}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; background: #f9fafb;">Password</td>
+                  <td style="padding: 10px; border: 1px solid #e5e7eb; font-family: monospace;">${safePassword}</td>
+                </tr>
+              </table>
+              <p>Please use your registered email address and the password above to log in.</p>
+              <p style="font-size: 13px; color: #6b7280;">For security, do not share this password with anyone.</p>
+              <p style="margin-bottom: 0;">Regards,<br>TimeGen Admin</p>
+            </div>
+          </div>
+        </div>`
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log("Failed to send welcome email:", error);
-      } else {
-        console.log("[Email] Welcome email sent successfully to real inbox!");
-      }
-    });
+    await transporter.sendMail(mailOptions);
+    console.log("[Email] Welcome email sent successfully to registered email.");
 
     console.log(`[New User] Name: ${name} | Email: ${email} | Password: ${password}`);
 
     res.json({
-      message: "Signup successful",
+      message: "Signup successful. Password has been sent to your email.",
       userName: name,
-      department: department,
-      token: "fake-jwt-token" // Consistent with login route
+      department: department
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -161,33 +220,97 @@ app.post("/forgot-password", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Generate a temporary 6-character password
-    const tempPassword = Math.random().toString(36).slice(-6);
+    const resetCode = crypto.randomInt(100000, 1000000).toString();
 
-    // Hash and save it
-    user.password = await bcrypt.hash(tempPassword, 10);
+    user.resetCode = await bcrypt.hash(resetCode, 10);
+    user.resetCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    // Send email with new password
+    const safeName = escapeHtml(user.username);
+    const safeCode = escapeHtml(resetCode);
+
     const mailOptions = {
       from: EMAIL_USER ? `"TimeGen Admin" <${EMAIL_USER}>` : '"TimeGen Admin" <no-reply@example.com>',
-      to: email, // This sends the email TO the user who forgot their password
-      subject: 'TimeGen - Password Reset & Account Details',
-      text: `Hello ${user.username},\n\nYour account details have been requested.\n\nYour registered email is: ${user.email}\nYour username is: ${user.username}\nYour new temporary password is: ${tempPassword}\n\n*Please use your EMAIL ADDRESS to log in to ensure you access the correct account.*\n\nPlease log in and change your password as soon as possible.\n\nBest regards,\nTimeGen Admin`
+      to: user.email,
+      subject: 'TimeGen Password Reset Verification Code',
+      text: `Dear ${user.username},
+
+We received a request to reset your TimeGen account password.
+
+Your verification code is: ${resetCode}
+
+This code is valid for 10 minutes. If you did not request a password reset, please ignore this email.
+
+Regards,
+TimeGen Admin`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #f4f7fb; padding: 24px; color: #1f2937;">
+          <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+            <div style="background: #0f172a; color: #ffffff; padding: 20px 24px;">
+              <h2 style="margin: 0; font-size: 22px;">Password Reset Verification</h2>
+            </div>
+            <div style="padding: 24px;">
+              <p style="margin-top: 0;">Dear ${safeName},</p>
+              <p>We received a request to reset your TimeGen account password.</p>
+              <p style="margin: 20px 0 8px;">Your verification code is:</p>
+              <div style="font-size: 28px; letter-spacing: 6px; font-weight: bold; color: #0f172a; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; text-align: center;">${safeCode}</div>
+              <p style="font-size: 13px; color: #6b7280;">This code is valid for 10 minutes. If you did not request a password reset, please ignore this email.</p>
+              <p style="margin-bottom: 0;">Regards,<br>TimeGen Admin</p>
+            </div>
+          </div>
+        </div>`
     };
 
-    console.log(`[Password Reset] User: ${user.username} | New Password: ${tempPassword}`);
+    await transporter.sendMail(mailOptions);
+    console.log(`[Password Reset] Verification code sent to ${user.email}`);
+    res.json({ message: "Verification code sent! Please check your email." });
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log("Failed to send reset email. Did you configure Gmail credentials?", error);
-        return res.json({ message: "Password reset successful! Check server console for new password (email delivery failed)." });
-      } else {
-        console.log("[Email] Password reset email sent successfully to real inbox!");
-        return res.json({ message: "Password reset email sent! Please check your inbox." });
-      }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/reset-password", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    const identifier = String(email || "").trim();
+    const resetCode = String(code || "").trim();
+    const password = String(newPassword || "");
+
+    if (!identifier || !resetCode || !password) {
+      return res.status(400).json({ message: "Email, verification code, and new password are required." });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        { email: new RegExp('^' + identifier + '$', 'i') },
+        { username: new RegExp('^' + identifier + '$', 'i') }
+      ]
     });
 
+    if (!user || !user.resetCode || !user.resetCodeExpires) {
+      return res.status(400).json({ message: "Please request a new verification code." });
+    }
+
+    if (user.resetCodeExpires < new Date()) {
+      user.resetCode = undefined;
+      user.resetCodeExpires = undefined;
+      await user.save();
+      return res.status(400).json({ message: "Verification code expired. Please request a new code." });
+    }
+
+    const isCodeValid = await bcrypt.compare(resetCode, user.resetCode);
+    if (!isCodeValid) {
+      return res.status(400).json({ message: "Invalid verification code." });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetCode = undefined;
+    user.resetCodeExpires = undefined;
+    await user.save();
+
+    console.log(`[Password Reset] Password updated for ${user.email}`);
+    res.json({ message: "Password reset successful. Please log in with your new password." });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -198,13 +321,22 @@ app.post("/submit-assignment", async (req, res) => {
   try {
     const assignments = req.body;
     if (!Array.isArray(assignments)) return res.status(400).send("Array expected");
+    const cleanAssignments = assignments.map(a => ({
+      ...a,
+      department: normalizeDepartment(a.department),
+      teacherName: String(a.teacherName || "").trim(),
+      semester: String(a.semester || "").trim(),
+      division: String(a.division || "").trim(),
+      subject: String(a.subject || "").trim(),
+      type: String(a.type || "").trim()
+    }));
 
     // ── Clash Detection ──────────────────────────────────────────────────────
     // A clash = same department + semester + division + subject already taken
     // by a DIFFERENT teacher.
     const clashes = [];
 
-    for (const a of assignments) {
+    for (const a of cleanAssignments) {
       const existing = await Assignment.findOne({
         department: a.department,
         semester: a.semester,
@@ -230,7 +362,7 @@ app.post("/submit-assignment", async (req, res) => {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    await Assignment.insertMany(assignments);
+    await Assignment.insertMany(cleanAssignments);
     res.send("saved");
   } catch (err) {
     res.status(500).send(err.message);
@@ -240,7 +372,7 @@ app.post("/submit-assignment", async (req, res) => {
 // Get already booked assignments for real-time checking
 app.get("/get-assignments", async (req, res) => {
   try {
-    const { department } = req.query;
+    const department = normalizeDepartment(req.query.department);
     if (!department) return res.status(400).send("Department required");
     const assignments = await Assignment.find({ department });
     res.json(assignments);
@@ -289,7 +421,7 @@ app.get("/get-public-url", (req, res) => {
 // Reset Database Route
 app.delete("/reset-db", async (req, res) => {
   try {
-    const { department } = req.query;
+    const department = normalizeDepartment(req.query.department);
     if (department) {
       await Assignment.deleteMany({ department });
     } else {
@@ -312,7 +444,7 @@ app.delete("/reset-db", async (req, res) => {
 // ============================================================
 app.get("/generate-timetable", async (req, res) => {
   try {
-    const { department } = req.query;
+    const department = normalizeDepartment(req.query.department);
     if (!department) return res.status(400).send("Department parameter is required.");
 
     const assignments = await Assignment.find({ department });
@@ -330,6 +462,7 @@ app.get("/generate-timetable", async (req, res) => {
       "02:00-03:00",
       "03:00-04:00"
     ];
+    const SCHEDULABLE_SLOTS = SLOTS.filter(s => s !== "10:30-11:00" && s !== "01:00-02:00");
     const THEORY_ROOMS = Array.from({ length: 50 }, (_, i) => `Room ${101 + i}`);
     const LAB_ROOMS = ["Comp Lab A", "Comp Lab B", "Comp Lab C", "Comp Lab D", "Electronics Lab"];
 
@@ -348,77 +481,63 @@ app.get("/generate-timetable", async (req, res) => {
       return pool.find(r => !used.includes(r)) || pool[0];
     };
 
+    const teacherHours = (teacher) =>
+      result.reduce((sum, r) => sum + (r.teacherName === teacher ? (r.type === "Lab" ? 2 : 1) : 0), 0);
+
+    const teacherHourRemaining = (teacher) => Math.max(0, 20 - teacherHours(teacher));
+
+    const teacherHasSessionOnDay = (teacher, day) =>
+      result.some(r => r.teacherName === teacher && r.day === day);
+
+    const teacherDayLoad = (teacher, day) =>
+      result.filter(r => r.teacherName === teacher && r.day === day)
+        .reduce((sum, r) => sum + (r.type === "Lab" ? 2 : 1), 0);
+
     // dayLoad: how many sessions this division has on a given day
     const divDayLoad = (day, sem, div) =>
       result.filter(r => r.day === day && r.semester === sem && r.division === div).length;
 
+    const stableIndex = (value, modulo) => {
+      const text = String(value || "");
+      let total = 0;
+      for (let i = 0; i < text.length; i++) total += text.charCodeAt(i) * (i + 1);
+      return total % modulo;
+    };
+
+    const rotate = (items, offset) =>
+      items.map((_, i) => items[(i + offset) % items.length]);
+
     // ── place 4 theory sessions spread across the week ───────
     function scheduleTheory(teacher, sem, div, subject, sessionCount = 4) {
+      sessionCount = Math.min(sessionCount, teacherHourRemaining(teacher));
+      if (sessionCount <= 0) return 0;
+
       let placed = 0;
 
-      // Pass 0: Try consistent slot for first 4 days (Mon-Thu)
-      if (sessionCount === 4) {
-        // iterate only over schedulable slots (skip breaks/lunch)
-        const schedulable = SLOTS.filter(s => s !== "10:30-11:00" && s !== "01:00-02:00");
-        for (const slot of schedulable) {
-          const firstFourDays = ["Mon", "Tue", "Wed", "Thu"];
-          const allFree = firstFourDays.every(day => isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher));
-
-          if (allFree) {
-            firstFourDays.forEach(day => {
-              result.push({
-                day, slot, semester: sem, division: div,
-                subject, teacherName: teacher, type: "Theory",
-                room: pickRoom(day, slot, false)
-              });
-            });
-            placed = 4;
-            break;
-          }
-        }
-      }
-
-      // Pass 1: Strict — one per day, teacher free, sorted lightest day first (if Pass 0 failed)
+      // Pass 1: Strict — one per day, teacher free, sorted lightest day first
       if (placed < sessionCount) {
-        for (let attempt = 0; attempt < 6 && placed < sessionCount; attempt++) {
-          const sortedDays = [...DAYS].sort((a, b) => divDayLoad(a, sem, div) - divDayLoad(b, sem, div));
+        const dayOffset = stableIndex(`${sem}-${div}-${subject}-${teacher}`, DAYS.length);
+        const sortedDays = [...DAYS].sort((a, b) => {
+          const aHas = Number(teacherHasSessionOnDay(teacher, a));
+          const bHas = Number(teacherHasSessionOnDay(teacher, b));
+          if (aHas !== bHas) return aHas - bHas;
+          const diff = divDayLoad(a, sem, div) - divDayLoad(b, sem, div);
+          return diff || rotate(DAYS, dayOffset).indexOf(a) - rotate(DAYS, dayOffset).indexOf(b);
+        });
 
-          for (const day of sortedDays) {
-            if (placed >= sessionCount) break;
+        for (const day of sortedDays) {
+          if (placed >= sessionCount || teacherHourRemaining(teacher) <= 0) break;
 
-            // Already has this subject on this day?
-            const subjectOnDay = result.some(
-              r => r.day === day && r.semester === sem && r.division === div && r.subject === subject
-            );
-            if (subjectOnDay) continue;
+          // Already has this subject on this day?
+          const subjectOnDay = result.some(
+            r => r.day === day && r.semester === sem && r.division === div && r.subject === subject
+          );
+          if (subjectOnDay) continue;
 
-            // Try every slot on this day
-            for (const slot of SLOTS) {
-              if (isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher)) {
-                result.push({
-                  day, slot, semester: sem, division: div,
-                  subject, teacherName: teacher, type: "Theory",
-                  room: pickRoom(day, slot, false)
-                });
-                placed++;
-                break; // one session per day
-              }
-            }
-            if (placed >= sessionCount) break;
-          }
-
-          if (placed >= sessionCount) break;
-        }
-      }
-
-      // Pass 2: Relaxed — allow same subject twice a day if needed, teacher still free
-      if (placed < sessionCount) {
-        // try schedulable slots only
-        const schedulable = SLOTS.filter(s => s !== "10:30-11:00" && s !== "01:00-02:00");
-        for (const day of DAYS) {
-          if (placed >= sessionCount) break;
-          for (const slot of schedulable) {
-            if (placed >= sessionCount) break;
+          // Try every slot on this day
+          const slotOffset = stableIndex(`${day}-${subject}-${teacher}-${placed}`, SCHEDULABLE_SLOTS.length);
+          for (const slot of rotate(SCHEDULABLE_SLOTS, slotOffset)) {
+            if (placed >= sessionCount || teacherHourRemaining(teacher) <= 0) break;
             if (isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher)) {
               result.push({
                 day, slot, semester: sem, division: div,
@@ -426,18 +545,23 @@ app.get("/generate-timetable", async (req, res) => {
                 room: pickRoom(day, slot, false)
               });
               placed++;
+              break; // one session per day
             }
           }
         }
       }
 
-      // Pass 3: Emergency — ignore teacher clash, only respect division
+      // Pass 2: Relaxed — allow same subject twice a day if needed, teacher still free
       if (placed < sessionCount) {
-        for (const day of DAYS) {
-          if (placed >= sessionCount) break;
-          for (const slot of SLOTS) {
-            if (placed >= sessionCount) break;
-            if (isDivFree(day, slot, sem, div)) {
+        const relaxedDays = [...DAYS].sort((a, b) =>
+          divDayLoad(a, sem, div) - divDayLoad(b, sem, div) || DAYS.indexOf(a) - DAYS.indexOf(b)
+        );
+        for (const day of relaxedDays) {
+          if (placed >= sessionCount || teacherHourRemaining(teacher) <= 0) break;
+          const slotOffset = stableIndex(`${day}-${subject}-${teacher}-relaxed`, SCHEDULABLE_SLOTS.length);
+          for (const slot of rotate(SCHEDULABLE_SLOTS, slotOffset)) {
+            if (placed >= sessionCount || teacherHourRemaining(teacher) <= 0) break;
+            if (isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher)) {
               result.push({
                 day, slot, semester: sem, division: div,
                 subject, teacherName: teacher, type: "Theory",
@@ -454,11 +578,19 @@ app.get("/generate-timetable", async (req, res) => {
 
     // ── place a 2-hour lab block ─────────────────────────────
     function scheduleLab(teacher, sem, div, subject) {
+      if (teacherHourRemaining(teacher) < 2) return false;
+
       // Valid contiguous pairs that avoid the short break and lunch
       // Using SLOTS indices: 0,1 are morning pair; 3,4 are mid-day; 6,7 are afternoon
       const validPairs = [ [0,1], [3,4], [6,7] ];
+      const sortedDays = [...DAYS].sort((a, b) => {
+        const aHas = Number(teacherHasSessionOnDay(teacher, a));
+        const bHas = Number(teacherHasSessionOnDay(teacher, b));
+        if (aHas !== bHas) return aHas - bHas;
+        return teacherDayLoad(teacher, a) - teacherDayLoad(teacher, b);
+      });
 
-      for (const day of DAYS) {
+      for (const day of sortedDays) {
         for (const [i1, i2] of validPairs) {
           const s1 = SLOTS[i1], s2 = SLOTS[i2];
           if (
