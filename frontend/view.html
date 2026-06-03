@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TimeGen | View Timetables</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
     :root {
@@ -212,20 +210,6 @@
     .pdf-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
     .pdf-mode .subject { color: #0f172a !important; }
     .pdf-mode .semester-title { border-bottom: 2px solid #0284c7 !important; color: #0f172a !important; }
-  .table-container table {
-    width: 100%;
-    font-size: 10px !important;
-}
-
-.table-container th,
-.table-container td {
-    padding: 4px !important;
-}
-
-.table-container {
-    background: white;
-}
-
 </style>
 </head>
 <body>
@@ -481,60 +465,24 @@
         return card;
     }
 
- async function downloadAllPDF() {
+    function downloadAllPDF() {
+        const element = document.getElementById('timetable-content');
+        // Add PDF styles temporarily
+        const sections = document.querySelectorAll('.timetable-section');
+        sections.forEach(s => s.classList.add('pdf-mode'));
+        
+        const opt = {
+            margin: [10, 10],
+            filename: `${dept}_Timetables_Full.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
 
-    const { jsPDF } = window.jspdf;
-
-    const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4"
-    });
-
-    const tables = document.querySelectorAll(".table-container");
-
-    if (tables.length === 0) {
-        alert("No timetable available to download.");
-        return;
-    }
-
-    for (let i = 0; i < tables.length; i++) {
-
-        const table = tables[i];
-
-        const canvas = await html2canvas(table, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff"
+        html2pdf().set(opt).from(element).save().then(() => {
+            sections.forEach(s => s.classList.remove('pdf-mode'));
         });
-
-        const imgData = canvas.toDataURL("image/png");
-
-        const pageWidth = 297;
-        const pageHeight = 210;
-
-        const margin = 10;
-        const usableWidth = pageWidth - (margin * 2);
-
-        const imgWidth = usableWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (i > 0) {
-            pdf.addPage();
-        }
-
-        pdf.addImage(
-            imgData,
-            "PNG",
-            margin,
-            margin,
-            imgWidth,
-            Math.min(imgHeight, pageHeight - 20)
-        );
     }
-
-    pdf.save(`${dept}_Timetables.pdf`);
-}
 
     fetchTimetables();
 
