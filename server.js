@@ -383,9 +383,28 @@ app.get("/generate-timetable", async (req, res) => {
     const teacherHasSessionOnDay = (teacher, day) =>
       result.some(r => r.teacherName === teacher && r.day === day);
 
-    const teacherDayLoad = (teacher, day) =>
+    // Prevent mixed Theory+Lab on the same day for a teacher
+    const teacherHasTheoryOnDay = (teacher, day) =>
+      result.some(r => r.teacherName === teacher && r.day === day && r.type === "Theory");
+
+    const teacherHasLabOnDay = (teacher, day) =>
+      result.some(r => r.teacherName === teacher && r.day === day && r.type === "Lab");
+
+    // Limit to at most 2 classes per day per teacher.
+    // Theory = 1 class, Lab = 1 class (even though it occupies 2 time-slots).
+    const teacherClassCountOnDay = (teacher, day) =>
       result.filter(r => r.teacherName === teacher && r.day === day)
-        .reduce((sum, r) => sum + (r.type === "Lab" ? 2 : 1), 0);
+        .reduce((sum, r) => {
+          if (r.type === "Theory") return sum + 1;
+          if (r.type === "Lab") {
+            // Count each lab pair once: only count the first slot of a pair (08:30 and 11:00 and 02:00)
+            // This matches validPairs start indices: 0,3,6.
+            const startSlots = new Set(["08:30-09:30", "11:00-12:00", "02:00-03:00"]);
+            return startSlots.has(r.slot) ? sum + 1 : sum;
+          }
+          return sum;
+        }, 0);
+
 
     const divDayLoad = (day, sem, div) =>
       result.filter(r => r.day === day && r.semester === sem && r.division === div).length;
@@ -403,6 +422,7 @@ app.get("/generate-timetable", async (req, res) => {
     function scheduleTheory(teacher, sem, div, subject, sessionCount = 4) {
       sessionCount = Math.min(sessionCount, teacherHourRemaining(teacher));
       if (sessionCount <= 0) return 0;
+
 
       let placed = 0;
 
@@ -426,7 +446,12 @@ app.get("/generate-timetable", async (req, res) => {
         const slotOffset = stableIndex(String(day) + '-' + subject + '-' + teacher + '-' + placed, SCHEDULABLE_SLOTS.length);
         for (const slot of rotate(SCHEDULABLE_SLOTS, slotOffset)) {
           if (placed >= sessionCount) break;
-          if (isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher)) {
+          if (isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher) &&
+              // teacher day must not mix Theory+Lab
+              !teacherHasLabOnDay(teacher, day) &&
+              // max 2 classes/day
+              teacherClassCountOnDay(teacher, day) < 2) {
+
             result.push({
               day, slot, semester: sem, division: div,
               subject, teacherName: teacher, type: "Theory",
@@ -450,8 +475,13 @@ app.get("/generate-timetable", async (req, res) => {
           const s1 = SLOTS[i1], s2 = SLOTS[i2];
           if (
             isDivFree(day, s1, sem, div) && isDivFree(day, s2, sem, div) &&
-            isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher)
+            isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher) &&
+            // teacher day must not mix Theory+Lab
+            !teacherHasTheoryOnDay(teacher, day) &&
+            // max 2 classes/day (count lab as 1 class)
+            teacherClassCountOnDay(teacher, day) < 2
           ) {
+
             const room = pickRoom(day, s1, true);
             result.push({ day, slot: s1, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
             result.push({ day, slot: s2, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
