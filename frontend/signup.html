@@ -338,8 +338,10 @@
             }
 
             if (response.ok) {
-                alert((data && data.message) || rawText || 'Account created successfully!');
-                window.location.href = '/login.html';
+                alert('Account created successfully!');
+                setTimeout(() => {
+                  window.location.href = '/login.html';
+                }, 50);
             } else {
                 alert(
                   (data && data.message) ||
