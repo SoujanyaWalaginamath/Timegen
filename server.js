@@ -467,30 +467,50 @@ app.get("/generate-timetable", async (req, res) => {
     }
 
     function scheduleLab(teacher, sem, div, subject) {
-      if (teacherHourRemaining(teacher) < 2) return false;
-      const validPairs = [[0,1],[3,4],[6,7]];
+      // 3-hour lab = 3 consecutive 1-hour slots in the timetable model
+      if (teacherHourRemaining(teacher) < 3) return false;
+
+      // Candidate 3-slot blocks (avoid the half-hour gaps that are removed from THEORY scheduling)
+      // Using SLOTS indices that correspond to continuous 3 hours:
+      // [0,1,3] => 08:30-09:30, 09:30-10:30, 11:00-12:00 (note: there is a gap at 10:30-11:00 in SLOTS)
+      // Instead we create 3 consecutive *scheduled* slots from the existing array by selecting indices that are consecutive in time.
+      // Since your SLOTS contains half-hour slots (10:30-11:00) and (01:00-02:00), we treat a “3 hour lab” as:
+      // - 08:30-09:30 (0)
+      // - 09:30-10:30 (1)
+      // - 11:00-12:00 (3)
+      // - OR 11:00-12:00 (3), 12:00-01:00 (4), 01:00-02:00 (5) is not continuous due to definition
+      // For correct 3-hour blocks in your current grid, we schedule exactly 3 *lab sessions* as 3 full hour slots:
+      // validTriples refer to hour-sized slots only: 0,1,3,4,6,7 => triples [0,1,3], [1,3,4], [3,4,6], [4,6,7]
+      const validTriples = [
+        [0, 1, 3],
+        [1, 3, 4],
+        [3, 4, 6],
+        [4, 6, 7]
+      ];
 
       for (const day of DAYS) {
-        for (const [i1,i2] of validPairs) {
-          const s1 = SLOTS[i1], s2 = SLOTS[i2];
+        for (const [i1, i2, i3] of validTriples) {
+          const s1 = SLOTS[i1], s2 = SLOTS[i2], s3 = SLOTS[i3];
+
           if (
-            isDivFree(day, s1, sem, div) && isDivFree(day, s2, sem, div) &&
-            isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher) &&
+            isDivFree(day, s1, sem, div) && isDivFree(day, s2, sem, div) && isDivFree(day, s3, sem, div) &&
+            isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher) && isTeacherFree(day, s3, teacher) &&
             // teacher day must not mix Theory+Lab
             !teacherHasTheoryOnDay(teacher, day) &&
             // max 2 classes/day (count lab as 1 class)
             teacherClassCountOnDay(teacher, day) < 2
           ) {
-
             const room = pickRoom(day, s1, true);
             result.push({ day, slot: s1, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
             result.push({ day, slot: s2, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
+            result.push({ day, slot: s3, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
             return true;
           }
         }
       }
       return false;
     }
+
 
     const sorted = [...assignments].sort((a, b) => {
       const aa = a._doc || a;
