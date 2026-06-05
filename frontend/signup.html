@@ -327,16 +327,29 @@
                 body: JSON.stringify({ name, email, password, department })
             });
 
-            const data = await response.json();
+            let data = null;
+            let rawText = null;
+
+            try {
+              data = await response.json();
+            } catch (e) {
+              // If server returns non-JSON (HTML/empty), fall back to text
+              rawText = await response.text().catch(() => null);
+            }
+
             if (response.ok) {
-                alert(data.message || 'Account created successfully! Your password has been sent to your email. Please log in.');
+                alert((data && data.message) || rawText || 'Account created successfully!');
                 window.location.href = '/login.html';
             } else {
-                alert(data.message || 'Signup failed');
+                alert(
+                  (data && data.message) ||
+                  rawText ||
+                  `Signup failed (HTTP ${response.status})`
+                );
             }
         } catch (error) {
             console.error('Signup error:', error);
-            alert('Server error, please try again later');
+            alert('Network/Server error: ' + (error?.message || 'please try again later'));
         }
     });
   </script>
