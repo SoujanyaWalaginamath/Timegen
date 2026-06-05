@@ -81,14 +81,23 @@ app.post("/signup", async (req, res) => {
   try {
     const { name, email, password, department } = req.body;
 
-    const safeName = escapeHtml(name);
-    const safeEmail = escapeHtml(email);
-    const safeDepartment = escapeHtml(department);
+    if (!name || !email || !password || !department) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    const username = String(name).trim();
+    const userEmail = String(email).trim().toLowerCase();
+    const userDepartment = normalizeDepartment(department);
+
+    const safeName = escapeHtml(username);
+    const safeEmail = escapeHtml(userEmail);
+    const safeDepartment = escapeHtml(userDepartment);
     const safePassword = escapeHtml(password);
+
 
     const mailOptions = {
       from: EMAIL_USER ? `"TimeGen Admin" <${EMAIL_USER}>` : '"TimeGen Admin" <no-reply@example.com>',
-      to: email,
+      to: userEmail,
       subject: "TimeGen Account Registration Successful",
       text: `Dear ${name},\n\nYour TimeGen administrator account has been created successfully.\n\nAccount Details:\nName: ${name}\nEmail: ${email}\nDepartment: ${department}\nPassword: ${password}\n\nRegards,\nTimeGen Admin`,
       html: `
@@ -114,6 +123,20 @@ app.post("/signup", async (req, res) => {
       `
     };
 
+    // Create the user in MongoDB
+    const existing = await User.findOne({ email: userEmail });
+    if (existing) {
+      return res.status(409).json({ success: false, message: "Email already registered" });
+    }
+
+    const hashedPassword = await bcrypt.hash(String(password), 10);
+    await User.create({
+      username,
+      email: userEmail,
+      password: hashedPassword,
+      department: userDepartment
+    });
+
     try {
       await transporter.sendMail(mailOptions);
       console.log("[Email] Welcome email sent successfully.");
@@ -121,14 +144,15 @@ app.post("/signup", async (req, res) => {
       console.error("[Email Error]", mailError.message);
     }
 
-    console.log(`[New User] Name: ${name} | Email: ${email} | Department: ${department}`);
+      console.log(`[New User] Name: ${username} | Email: ${userEmail} | Department: ${userDepartment}`);
 
-    res.status(201).json({
-      success: true,
-      message: "Account created successfully",
-      userName: name,
-      department
-    });
+      return res.status(201).json({
+        success: true,
+        message: "Account created successfully",
+        userName: username,
+        department: userDepartment
+      });
+
   } catch (err) {
     console.error("[Signup Error]", err);
     res.status(500).json({

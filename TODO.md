@@ -1,7 +1,15 @@
-# TODO - Landing Page Makeover (TimeGen)
+# TODO
 
-- [x] Rewrite `frontend/index.html` with more creative, README-aligned content and improved section layout
-- [x] Keep the same neon/glass theme and existing overall visual style
-- [x] Do not modify any other files
-- [x] Verify links to `login.html`, `signup.html`, `dashboard.html`, `form.html`, and `view.html`
+- [ ] Implement real user creation in POST `/signup`:
+  - [ ] Hash password with bcrypt
+  - [ ] Create Mongo user document via `User.create()` / `new User().save()`
+  - [ ] Enforce duplicate email handling (return 409 on unique conflict)
+- [ ] Align field mapping:
+  - [ ] Frontend sends `{ name, email, password, department }`
+  - [ ] Backend should store `username = name`
+- [ ] Keep both entrypoints consistent (`server.js` and `backend/server.js`) so whichever is deployed/used works.
+- [ ] Restart backend/server and test:
+  - [ ] Sign up -> expect success
+  - [ ] Login -> expect user found
+  - [ ] Verify Mongo contains created user
 
