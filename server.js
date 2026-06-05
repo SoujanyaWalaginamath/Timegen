@@ -126,7 +126,7 @@ app.post("/signup", async (req, res) => {
     // Create the user in MongoDB
     const existing = await User.findOne({ email: userEmail });
     if (existing) {
-      return res.status(409).json({ success: false, message: "Email already registered" });
+      return res.status(409).json({ success: false, message: "Account successfully created" });
     }
 
     const hashedPassword = await bcrypt.hash(String(password), 10);
