@@ -342,13 +342,7 @@
                 setTimeout(() => {
                   window.location.href = '/login.html';
                 }, 50);
-            } else {
-                alert(
-                  (data && data.message) ||
-                  rawText ||
-                  `Signup failed (HTTP ${response.status})`
-                );
-            }
+            } 
         } catch (error) {
             console.error('Signup error:', error);
             alert('Network/Server error: ' + (error?.message || 'please try again later'));
