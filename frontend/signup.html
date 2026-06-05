@@ -330,7 +330,7 @@
             const data = await response.json();
             if (response.ok) {
                 alert(data.message || 'Account created successfully! Your password has been sent to your email. Please log in.');
-                window.location.href = 'login.html';
+                window.location.href = '/login.html';
             } else {
                 alert(data.message || 'Signup failed');
             }
