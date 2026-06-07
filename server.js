@@ -505,34 +505,30 @@ app.get("/generate-timetable", async (req, res) => {
     }
 
     function scheduleLab(teacher, sem, div, subject) {
-      // 3-hour lab = 3 consecutive 1-hour slots in the timetable model
-      if (teacherHourRemaining(teacher) < 3) return false;
+      // 2-hour continuous lab = 2 consecutive 1-hour slots in the timetable model
+      // "continuous two hours with no break" => only hour-to-hour adjacent slots in SLOTS indices.
+      // Using allowed consecutive hour slot pairs (no gap slot in-between):
+      // Valid consecutive hour pairs are: (0,1), (3,4), (4,5), (6,7)
+      // Note: your grid has a removed gap at 10:30-11:00 and 01:00-02:00; we only pick pairs that are truly adjacent in the list.
+      // ensure we have at least 2 remaining hour-slots budget for the teacher
+      if (teacherHourRemaining(teacher) < 2) return false;
 
-      // Candidate 3-slot blocks (avoid the half-hour gaps that are removed from THEORY scheduling)
-      // Using SLOTS indices that correspond to continuous 3 hours:
-      // [0,1,3] => 08:30-09:30, 09:30-10:30, 11:00-12:00 (note: there is a gap at 10:30-11:00 in SLOTS)
-      // Instead we create 3 consecutive *scheduled* slots from the existing array by selecting indices that are consecutive in time.
-      // Since your SLOTS contains half-hour slots (10:30-11:00) and (01:00-02:00), we treat a “3 hour lab” as:
-      // - 08:30-09:30 (0)
-      // - 09:30-10:30 (1)
-      // - 11:00-12:00 (3)
-      // - OR 11:00-12:00 (3), 12:00-01:00 (4), 01:00-02:00 (5) is not continuous due to definition
-      // For correct 3-hour blocks in your current grid, we schedule exactly 3 *lab sessions* as 3 full hour slots:
-      // validTriples refer to hour-sized slots only: 0,1,3,4,6,7 => triples [0,1,3], [1,3,4], [3,4,6], [4,6,7]
-      const validTriples = [
-        [0, 1, 3],
-        [1, 3, 4],
-        [3, 4, 6],
-        [4, 6, 7]
+      // 2 consecutive 1-hour slots with NO break (adjacent in SLOTS)
+      // indices: (0,1), (1,2 not allowed because 10:30-11:00 is a gap), (3,4), (4,5), (6,7)
+      const validPairs = [
+        [0, 1], // 08:30-09:30 + 09:30-10:30
+        [3, 4], // 11:00-12:00 + 12:00-01:00
+        [4, 5], // 12:00-01:00 + 01:00-02:00
+        [6, 7]  // 02:00-03:00 + 03:00-04:00
       ];
 
       for (const day of DAYS) {
-        for (const [i1, i2, i3] of validTriples) {
-          const s1 = SLOTS[i1], s2 = SLOTS[i2], s3 = SLOTS[i3];
+        for (const [i1, i2] of validPairs) {
+          const s1 = SLOTS[i1], s2 = SLOTS[i2];
 
           if (
-            isDivFree(day, s1, sem, div) && isDivFree(day, s2, sem, div) && isDivFree(day, s3, sem, div) &&
-            isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher) && isTeacherFree(day, s3, teacher) &&
+            isDivFree(day, s1, sem, div) && isDivFree(day, s2, sem, div) &&
+            isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher) &&
             // teacher day must not mix Theory+Lab
             !teacherHasTheoryOnDay(teacher, day) &&
             !teacherHasLabOnDay(teacher, day) &&
@@ -541,9 +537,9 @@ app.get("/generate-timetable", async (req, res) => {
             teacherClassCountOnDay(teacher, day) < 2
           ) {
             const room = pickRoom(day, s1, true);
+            // same room for both lab hours
             result.push({ day, slot: s1, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
             result.push({ day, slot: s2, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
-            result.push({ day, slot: s3, semester: sem, division: div, subject, teacherName: teacher, type: "Lab", room });
             return true;
           }
         }
