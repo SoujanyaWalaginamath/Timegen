@@ -484,9 +484,11 @@ app.get("/generate-timetable", async (req, res) => {
           if (placed >= sessionCount) break;
           if (isDivFree(day, slot, sem, div) && isTeacherFree(day, slot, teacher) &&
               // teacher day must not mix Theory+Lab
+              // teacher day must not mix Theory+Lab
               !teacherHasLabOnDay(teacher, day) &&
               // max 2 classes/day
               teacherClassCountOnDay(teacher, day) < 2) {
+
 
             result.push({
               day, slot, semester: sem, division: div,
