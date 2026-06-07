@@ -315,12 +315,39 @@
 
         const name       = document.getElementById('name').value;
         const email      = document.getElementById('email').value;
+
         const password   = pwdInput.value;
         const department = document.getElementById('department').value;
 
 
+        // Validations
+        const isValidName = /^[A-Za-z ]+$/.test(name.trim());
+        if (!isValidName) {
+          alert('Invalid Name: use letters and spaces only (no numbers).');
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '';
+          return;
+        }
+
+        // Require yahoo only + full email + dot in domain
+        const yahooDomains = ['yahoo.com', 'yahoo.co.in'];
+        const emailTrimmed = email.trim();
+        const emailOkFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
+        const domainPart = emailTrimmed.split('@')[1] || '';
+        const emailOkDomain = yahooDomains.some(d => domainPart.toLowerCase() === d);
+
+        if (!emailOkFormat || !emailOkDomain) {
+          alert('Invalid Email: Please enter a valid Yahoo email (e.g., name@yahoo.com or name@yahoo.co.in).');
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '';
+          return;
+        }
+
         /* Block weak passwords */
         if (getStrength(password) === 'weak') {
+
           // Ensure submit button state is restored if user triggers this path
           isSubmitting = false;
           submitBtn.disabled = false;

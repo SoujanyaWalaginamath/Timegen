@@ -89,6 +89,25 @@ app.post("/signup", async (req, res) => {
     const userEmail = String(email).trim().toLowerCase();
     const userDepartment = normalizeDepartment(department);
 
+    // Server-side validations
+    const isValidName = /^[A-Za-z ]+$/.test(username);
+    if (!isValidName) {
+      return res.status(400).json({ success: false, message: 'Invalid name: use letters and spaces only.' });
+    }
+
+    const yahooDomains = ['yahoo.com', 'yahoo.co.in'];
+    const emailOkFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail);
+    const domainPart = userEmail.split('@')[1] || '';
+    const emailOkDomain = yahooDomains.some(d => domainPart.toLowerCase() === d);
+
+    if (!emailOkFormat || !emailOkDomain) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email: enter a valid Yahoo email like name@yahoo.com or name@yahoo.co.in.'
+      });
+    }
+
+
     const safeName = escapeHtml(username);
     const safeEmail = escapeHtml(userEmail);
     const safeDepartment = escapeHtml(userDepartment);
