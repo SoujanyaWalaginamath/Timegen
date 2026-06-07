@@ -95,17 +95,33 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid name: use letters and spaces only.' });
     }
 
-    const yahooDomains = ['yahoo.com', 'yahoo.co.in'];
+    const allowedDomains = ['yahoo.com', 'yahoo.co.in'];
     const emailOkFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail);
-    const domainPart = userEmail.split('@')[1] || '';
-    const emailOkDomain = yahooDomains.some(d => domainPart.toLowerCase() === d);
 
-    if (!emailOkFormat || !emailOkDomain) {
+    if (!emailOkFormat) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid email: enter a valid Yahoo email like name@yahoo.com or name@yahoo.co.in.'
+        message: 'Invalid email: enter a full valid email with a domain dot (example: name@yahoo.com).'
       });
     }
+
+    const domainPart = userEmail.split('@')[1] || '';
+    const emailOkDomain = allowedDomains.includes(domainPart);
+
+    if (!emailOkDomain) {
+      let message = 'Invalid email: Please use ' + allowedDomains.join(' or ') + '.';
+      if (domainPart.includes('gmail.com')) {
+        message = 'Invalid email: Gmail is not allowed. Use ' + allowedDomains.join(' or ') + '.';
+      } else if (domainPart.includes('co.edu.in') || domainPart === 'co.edu.in') {
+        message = 'Invalid email: co.edu.in is not allowed. Use ' + allowedDomains.join(' or ') + '.';
+      }
+
+      return res.status(400).json({
+        success: false,
+        message
+      });
+    }
+
 
 
     const safeName = escapeHtml(username);

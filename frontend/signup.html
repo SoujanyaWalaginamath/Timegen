@@ -330,20 +330,39 @@
           return;
         }
 
-        // Require yahoo only + full email + dot in domain
-        const yahooDomains = ['yahoo.com', 'yahoo.co.in'];
+        // Email validation (show domain-specific errors)
+        const allowedDomains = ['yahoo.com', 'yahoo.co.in'];
+        const allowedDomainsPretty = allowedDomains.join(' or ');
+
         const emailTrimmed = email.trim();
         const emailOkFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
-        const domainPart = emailTrimmed.split('@')[1] || '';
-        const emailOkDomain = yahooDomains.some(d => domainPart.toLowerCase() === d);
 
-        if (!emailOkFormat || !emailOkDomain) {
-          alert('Invalid Email: Please enter a valid Yahoo email (e.g., name@yahoo.com or name@yahoo.co.in).');
+        if (!emailOkFormat) {
+          // Includes cases like missing '@' or missing '.' in domain
+          alert('Invalid Email: enter a full valid email with a domain dot (example: name@yahoo.com).');
           isSubmitting = false;
           submitBtn.disabled = false;
           submitBtn.style.opacity = '';
           return;
         }
+
+        const domainPart = (emailTrimmed.split('@')[1] || '').toLowerCase();
+
+        if (!allowedDomains.includes(domainPart)) {
+          if (domainPart.includes('gmail.com')) {
+            alert('Invalid Email: Gmail is not allowed. Use ' + allowedDomainsPretty + '.');
+          } else if (domainPart.includes('co.edu.in') || domainPart === 'co.edu.in') {
+            alert('Invalid Email: co.edu.in is not allowed. Use ' + allowedDomainsPretty + '.');
+          } else {
+            alert('Invalid Email: Please use ' + allowedDomainsPretty + '.');
+          }
+
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '';
+          return;
+        }
+
 
         /* Block weak passwords */
         if (getStrength(password) === 'weak') {
