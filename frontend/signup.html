@@ -302,15 +302,30 @@
     });
 
     /* ── Form Submit ── */
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    const signupForm = document.getElementById('signupForm');
+    const submitBtn = signupForm.querySelector('button[type="submit"]');
+    let isSubmitting = false;
+
+    signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (isSubmitting) return; // prevent double request
+        isSubmitting = true;
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
+
         const name       = document.getElementById('name').value;
         const email      = document.getElementById('email').value;
         const password   = pwdInput.value;
         const department = document.getElementById('department').value;
 
+
         /* Block weak passwords */
         if (getStrength(password) === 'weak') {
+          // Ensure submit button state is restored if user triggers this path
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '';
+
           pwdInput.classList.remove('shake');
           void pwdInput.offsetWidth; // reflow to restart animation
           pwdInput.classList.add('shake');
@@ -319,6 +334,7 @@
           pwdInput.focus();
           return;
         }
+
 
         try {
             const response = await fetch('/signup', {
@@ -352,8 +368,13 @@
         } catch (error) {
             console.error('Signup error:', error);
             alert('Network/Server error: ' + (error?.message || 'please try again later'));
+        } finally {
+            isSubmitting = false;
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '';
         }
     });
+
   </script>
 </body>
 </html>

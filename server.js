@@ -126,8 +126,9 @@ app.post("/signup", async (req, res) => {
     // Create the user in MongoDB
     const existing = await User.findOne({ email: userEmail });
     if (existing) {
-      return res.status(409).json({ success: false, message: "Account successfully created" });
+      return res.status(409).json({ success: false, message: "Email already registered" });
     }
+
 
     const hashedPassword = await bcrypt.hash(String(password), 10);
     await User.create({
@@ -137,14 +138,13 @@ app.post("/signup", async (req, res) => {
       department: userDepartment
     });
 
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log("[Email] Welcome email sent successfully.");
-    } catch (mailError) {
-      console.error("[Email Error]", mailError.message);
-    }
+    // Don't block signup response on email sending (can be slow on some hosts)
+    transporter.sendMail(mailOptions)
+      .then(() => console.log("[Email] Welcome email sent successfully."))
+      .catch((mailError) => console.error("[Email Error]", mailError.message));
 
-      console.log(`[New User] Name: ${username} | Email: ${userEmail} | Department: ${userDepartment}`);
+    console.log(`[New User] Name: ${username} | Email: ${userEmail} | Department: ${userDepartment}`);
+
 
       return res.status(201).json({
         success: true,
@@ -397,11 +397,12 @@ app.get("/generate-timetable", async (req, res) => {
         .reduce((sum, r) => {
           if (r.type === "Theory") return sum + 1;
           if (r.type === "Lab") {
-            // Count each lab pair once: only count the first slot of a pair (08:30 and 11:00 and 02:00)
-            // This matches validPairs start indices: 0,3,6.
-            const startSlots = new Set(["08:30-09:30", "11:00-12:00", "02:00-03:00"]);
-            return startSlots.has(r.slot) ? sum + 1 : sum;
+            // Count each 3-hour lab as exactly 1 class by counting only the *start* slot(s)
+            // for the current 3-hour lab triples.
+            const labStartSlots = new Set(["08:30-09:30", "11:00-12:00", "01:00-02:00", "02:00-03:00"]);
+            return labStartSlots.has(r.slot) ? sum + 1 : sum;
           }
+
           return sum;
         }, 0);
 
@@ -497,6 +498,8 @@ app.get("/generate-timetable", async (req, res) => {
             isTeacherFree(day, s1, teacher) && isTeacherFree(day, s2, teacher) && isTeacherFree(day, s3, teacher) &&
             // teacher day must not mix Theory+Lab
             !teacherHasTheoryOnDay(teacher, day) &&
+            !teacherHasLabOnDay(teacher, day) &&
+
             // max 2 classes/day (count lab as 1 class)
             teacherClassCountOnDay(teacher, day) < 2
           ) {
