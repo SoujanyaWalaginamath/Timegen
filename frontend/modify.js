@@ -150,28 +150,27 @@
           continue;
         }
 
-      const entry = current.find(e => e.day === day && e.slot === slot && e.semester === sem && e.division === div);
+        const entry = current.find(e => e.day === day && e.slot === slot && e.semester === sem && e.division === div);
         const cellKey = `${day}__${slot}__${sem}__${div}__`;
 
-        if (!entry) {
-          // Empty cell must still be clickable as a target for moving the selected block.
+        // Make every slot cell a valid move target.
+        tr.innerHTML += `
+          <td data-cell="${cellKey}" onclick="window.__tt_moveToSlot && window.__tt_moveToSlot('${day}', '${slot}', '${sem}', '${div}')">
+        `;
+
+        if (entry) {
           tr.innerHTML += `
-            <td class="empty-cell" data-cell="${cellKey}" onclick="window.__tt_moveToSlot && window.__tt_moveToSlot('${day}', '${slot}', '${sem}', '${div}')"></td>
-          `;
-        } else {
-          tr.innerHTML += `
-            <td data-cell="${cellKey}" onclick="window.__tt_moveToSlot && window.__tt_moveToSlot('${day}', '${slot}', '${sem}', '${div}')">
-              <div class="block" draggable="false"
-                data-entry-key="${encodeURIComponent(entryKey(entry))}"
-                onclick="event.stopPropagation(); window.__tt_selectEntry && window.__tt_selectEntry('${encodeURIComponent(entryKey(entry))}', '${day}', '${slot}', '${sem}', '${div}', '')">
-                <span class="subj ${entry.type === 'Lab' ? 'lab' : ''}">${entry.subject}</span>
-                <span class="meta">👨‍🏫 ${entry.teacherName}</span>
-                <span class="room">📍 ${entry.room || 'Room TBD'}</span>
-              </div>
-            </td>
+            <div class="block" draggable="false"
+              data-entry-key="${encodeURIComponent(entryKey(entry))}"
+              onclick="event.stopPropagation(); window.__tt_selectEntry && window.__tt_selectEntry('${encodeURIComponent(entryKey(entry))}', '${day}', '${slot}', '${sem}', '${div}', '')">
+              <span class="subj ${entry.type === 'Lab' ? 'lab' : ''}">${entry.subject}</span>
+              <span class="meta">👨‍🏫 ${entry.teacherName}</span>
+              <span class="room">📍 ${entry.room || 'Room TBD'}</span>
+            </div>
           `;
         }
 
+        tr.innerHTML += `</td>`;
       }
       tbody.appendChild(tr);
     }
@@ -179,6 +178,7 @@
     table.appendChild(tbody);
     timetableWrap.appendChild(table);
   }
+
 
   function renderTeacherGrid(teacher) {
     const table = document.createElement('table');
