@@ -682,8 +682,14 @@
   <script>
     // Session Protection
     (function () {
-      if (!sessionStorage.getItem('token')) window.location.replace('index.html');
+      // If user is logged out, block access to the dashboard.
+      if (!sessionStorage.getItem('token')) {
+        // Also clear any stale state.
+        sessionStorage.clear();
+        window.location.replace('index.html');
+      }
     })();
+
 
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('userNameDisplay').textContent = sessionStorage.getItem('userName') || 'Admin';

@@ -273,7 +273,16 @@
         }
     }
 
+    // If user is already logged in, avoid letting back/forward land here.
+    // This prevents going back from dashboard after logout/security checks.
+    (function () {
+        if (sessionStorage.getItem('token')) {
+            window.location.replace('dashboard.html');
+        }
+    })();
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
+
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
