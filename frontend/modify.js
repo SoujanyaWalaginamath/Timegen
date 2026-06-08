@@ -94,21 +94,7 @@
     document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected'));
   }
 
-  function markDropTargets(day, slot, sem, div, teacher) {
-    // highlight valid target cell for current selection
-    const cell = document.querySelector(`[data-cell="${day}__${slot}__${sem ?? ''}__${div ?? ''}__${teacher ?? ''}"]`);
-    if (!cell) return;
 
-    // if there is selection, determine whether drop is valid
-    if (!selectedCell) {
-      cell.classList.remove('drop-hint');
-      return;
-    }
-
-    const entryToMove = selectedCell.entry;
-    const allowed = isMoveAllowed(entryToMove, day, slot, sem, div);
-    cell.classList.toggle('drop-hint', allowed);
-  }
 
   function render() {
     timetableWrap.innerHTML = '';
