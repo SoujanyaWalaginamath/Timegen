@@ -375,9 +375,43 @@ app.delete("/reset-db", async (req, res) => {
   }
 });
 
+app.post("/save-timetable", async (req, res) => {
+  try {
+    const { department, timetable } = req.body;
+    const dept = normalizeDepartment(department);
+    if (!dept) return res.status(400).json({ message: "department is required" });
+    if (!Array.isArray(timetable)) return res.status(400).json({ message: "timetable array is required" });
+
+    // Store shuffled timetable into Assignment collection.
+    // We overwrite existing entries for the department.
+    // Note: Assignment schema matches teacherName/semester/division/subject/type; we also store day/slot/room.
+    await Assignment.deleteMany({ department: dept });
+
+    // Ensure teacherName/semester/division/subject/type exist; keep extra timetable fields.
+    const docs = timetable.map(t => ({
+      department: dept,
+      teacherName: String(t.teacherName || "").trim(),
+      semester: String(t.semester || "").trim(),
+      division: String(t.division || "").trim(),
+      subject: String(t.subject || "").trim(),
+      type: String(t.type || "").trim(),
+      day: t.day,
+      slot: t.slot,
+      room: t.room
+    }));
+
+    await Assignment.insertMany(docs);
+    res.json({ success: true, saved: docs.length });
+  } catch (err) {
+    console.error("[save-timetable ERROR]", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.get("/generate-timetable", async (req, res) => {
   try {
     const department = normalizeDepartment(req.query.department);
+
     if (!department) return res.status(400).send("Department parameter is required.");
 
     const assignments = await Assignment.find({ department });

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeGen | Modify Timetable</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --secondary: #818cf8;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --dark: #0f172a;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-hover: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-muted: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+    body {
+      background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1a1040);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: white;
+      min-height: 100vh;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 40px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      color: white;
+    }
+
+    .logo span { color: var(--primary); }
+
+    .nav-right { display: flex; gap: 12px; align-items: center; }
+
+    .btn {
+      padding: 10px 22px;
+      border-radius: 50px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s;
+    }
+    .btn:hover { background: var(--glass-hover); }
+
+    .btn-primary {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--primary);
+    }
+    .btn-primary:hover { background: rgba(56, 189, 248, 0.18); }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.1);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: var(--rose);
+    }
+
+    .main {
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .header h1 {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -0.4px;
+      margin-bottom: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p { color: var(--text-muted); font-weight: 600; }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .toolbar label { color: var(--text-muted); font-weight: 700; font-size: 14px; }
+
+    select {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: white;
+      outline: none;
+      font-weight: 700;
+    }
+
+    .status {
+      margin: 16px 0 18px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .conflict {
+      color: var(--rose);
+    }
+
+    .timetable {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+    th, td { border: 1px solid var(--glass-border); padding: 10px; text-align: center; }
+    th { background: rgba(56, 189, 248, 0.1); color: var(--primary); font-weight: 900; font-size: 12px; }
+
+    .day-cell { background: rgba(56, 189, 248, 0.05); color: var(--primary); font-weight: 900; }
+
+    .empty-cell { color: #64748b; font-weight: 800; }
+
+    .block {
+      min-width: 160px;
+      cursor: grab;
+      user-select: none;
+      border-radius: 12px;
+      padding: 8px 10px;
+      transition: 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .block:hover { background: rgba(255, 255, 255, 0.05); }
+
+    .block.selected {
+      outline: 3px solid rgba(56,189,248,0.65);
+      background: rgba(56,189,248,0.10);
+    }
+
+    .block.invalid-drop {
+      opacity: 0.55;
+    }
+
+    .subj {
+      font-weight: 900;
+      color: white;
+      display: block;
+      font-size: 13px;
+    }
+    .subj.lab { color: var(--emerald); font-style: italic; }
+
+    .meta {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 800;
+      line-height: 1.2;
+      display: block;
+    }
+
+    .room {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 800;
+      display: block;
+    }
+
+    .drop-hint { background: rgba(16,185,129,0.12) !important; }
+
+    .toast {
+      position: fixed;
+      bottom: 26px;
+      right: 26px;
+      background: rgba(16,185,129,0.92);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-weight: 800;
+      display: none;
+      z-index: 999;
+    }
+    .toast.show { display: block; }
+
+    .small-note { color: var(--text-muted); margin-top: 10px; font-weight: 700; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="dashboard.html" class="logo">Time<span>Gen</span></a>
+    <div class="nav-right">
+      <button class="btn btn-danger" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="header">
+      <div>
+        <h1>Modify Timetable</h1>
+        <p>Click a block, then click another slot to shuffle. Conflicts will be blocked.</p>
+      </div>
+      <div class="toolbar">
+        <div>
+          <label for="modeSel">View mode</label><br/>
+          <select id="modeSel">
+            <option value="class">By Class (Semester/Division)</option>
+            <option value="teacher">By Teacher</option>
+          </select>
+        </div>
+        <div id="semDivWrap" style="display:none;">
+          <div>
+            <label for="semSel">Semester</label><br/>
+            <select id="semSel"></select>
+          </div>
+          <div style="margin-left:10px;">
+            <label for="divSel">Division</label><br/>
+            <select id="divSel"></select>
+          </div>
+        </div>
+        <div id="teacherWrap" style="display:none;">
+          <div>
+            <label for="teacherSel">Teacher</label><br/>
+            <select id="teacherSel"></select>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="saveBtn">💾 Save Changes</button>
+        <button class="btn" id="resetBtn">↩ Reset UI</button>
+      </div>
+    </div>
+
+    <div class="status" id="statusBox">Loading...</div>
+
+    <div class="timetable" id="timetableWrap"></div>
+    <div class="small-note">Teacher availability rules used: no teacher double-booking and no division double-booking for the same day+slot.</div>
+  </div>
+
+  <div id="toast" class="toast">Saved!</div>
+
+  <script src="modify.js"></script>
+  <script>
+
+    // Keep all logic in modify.js; this page only does session guard + UI init hooks.
+    (function(){
+      if (!sessionStorage.getItem('token')) window.location.replace('index.html');
+    })();
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.replace('index.html');
+    });
+  </script>
+</body>
+</html>
+
