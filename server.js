@@ -95,8 +95,9 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid name: use letters and spaces only.' });
     }
 
-    const allowedDomains = ['yahoo.com', 'yahoo.co.in', 'gmail.com', 'gmail.co.in', 'co.edu.in'];
+    const allowedDomains = ['yahoo.com', 'yahoo.co.in', 'gmail.com', 'gmail.co.in', 'co.edu.in', 'rlsi.in'];
     const emailOkFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail);
+
 
     if (!emailOkFormat) {
       return res.status(400).json({

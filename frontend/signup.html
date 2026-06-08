@@ -331,8 +331,9 @@
         }
 
         // Email validation (show domain-specific errors)
-        const allowedDomains = ['yahoo.com', 'yahoo.co.in', 'gmail.com', 'gmail.co.in', 'co.edu.in'];
+        const allowedDomains = ['yahoo.com', 'yahoo.co.in', 'gmail.com', 'gmail.co.in', 'co.edu.in', 'rlsi.in'];
         const allowedDomainsPretty = allowedDomains.join(' or ');
+
 
         const emailTrimmed = email.trim();
         const emailOkFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
